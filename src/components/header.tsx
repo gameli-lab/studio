@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from '@/components/ui/sheet';
-import { Menu, UserCircle } from 'lucide-react';
+import { Menu, UserCircle, Moon, Sun } from 'lucide-react';
 import React, { useContext } from 'react';
 import { AuthContext } from '@/contexts/auth-context';
 import {
@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useTheme } from 'next-themes';
 
 const Logo = () => (
   <svg
@@ -40,6 +41,7 @@ const Logo = () => (
 
 export function Header() {
   const auth = useContext(AuthContext);
+  const { setTheme, theme } = useTheme();
 
   const navLinks = [
     { href: "/#about", label: "About" },
@@ -61,35 +63,47 @@ export function Header() {
             </Link>
           ))}
         </nav>
-        <div className="hidden md:flex items-center gap-2">
-          {auth?.user ? (
-             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2">
-                  <UserCircle />
-                  {auth.user.name}
+        <div className="flex items-center gap-2">
+           <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              className="hidden md:inline-flex"
+            >
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+          <div className="hidden md:flex items-center gap-2">
+            {auth?.user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <UserCircle />
+                    {auth.user.name}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {auth.user.role === 'admin' && <DropdownMenuItem asChild><Link href="/admin/dashboard">Dashboard</Link></DropdownMenuItem>}
+                  <DropdownMenuItem asChild><Link href="/my-bookings">My Bookings</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/settings">Settings</Link></DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={auth.logout}>Sign Out</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link href="/login">Sign In</Link>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {auth.user.role === 'admin' && <DropdownMenuItem asChild><Link href="/admin/dashboard">Dashboard</Link></DropdownMenuItem>}
-                <DropdownMenuItem asChild><Link href="/my-bookings">My Bookings</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><Link href="/settings">Settings</Link></DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={auth.logout}>Sign Out</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <>
-              <Button variant="ghost" asChild>
-                <Link href="/login">Sign In</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/signup">Sign Up</Link>
-              </Button>
-            </>
-          )}
+                <Button asChild>
+                  <Link href="/signup">Sign Up</Link>
+                </Button>
+              </>
+            )}
+          </div>
         </div>
         <Sheet>
           <SheetTrigger asChild>
@@ -100,9 +114,20 @@ export function Header() {
           </SheetTrigger>
           <SheetContent side="right">
             <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
-             <div className="flex items-center gap-2 p-4 border-b">
-                <Logo />
-                <span className="font-headline text-lg font-bold">AstroBook</span>
+             <div className="flex items-center justify-between p-4 border-b">
+                <Link href="/" className="flex items-center gap-2 font-bold">
+                    <Logo />
+                    <span className="font-headline text-lg">AstroBook</span>
+                </Link>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                    >
+                    <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <span className="sr-only">Toggle theme</span>
+                </Button>
               </div>
             <div className="grid gap-6 p-6">
               <nav className="grid gap-4">
