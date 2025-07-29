@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { PlusCircle, MoreHorizontal, Search, Filter } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Search, Filter, AreaChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
@@ -106,7 +106,7 @@ export default function AdminBookingsPage() {
                         href="/admin/dashboard"
                         className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
                     >
-                        <MoreHorizontal className="h-4 w-4" />
+                        <AreaChart className="h-4 w-4" />
                         Dashboard
                     </Link>
                     <Link
