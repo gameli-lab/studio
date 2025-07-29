@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarDays, Clock, Tag, Wallet, Lock } from "lucide-react";
+import { CalendarDays, Clock, Tag, Wallet, Lock, Hourglass } from "lucide-react";
 import { AuthContext } from '@/contexts/auth-context';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 // Assuming slots from 8 AM to 10 PM (22:00)
 const timeSlots = Array.from({ length: 15 }, (_, i) => {
@@ -18,9 +19,18 @@ const timeSlots = Array.from({ length: 15 }, (_, i) => {
   return `${hour.toString().padStart(2, '0')}:00`;
 });
 
+// Mocking some booked slots for demonstration
+const bookedSlots = [
+    '2024-08-20T10:00:00.000Z',
+    '2024-08-20T14:00:00.000Z',
+    '2024-08-22T11:00:00.000Z',
+];
+
+
 export function BookingSection() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [duration, setDuration] = useState(1);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -39,10 +49,10 @@ export function BookingSection() {
       afterHoursFee = 50;
     }
 
-    const total = baseRate + afterHoursFee;
+    const total = (baseRate * duration) + (afterHoursFee * duration);
 
-    return { baseRate, afterHoursFee, total };
-  }, [selectedTime]);
+    return { baseRate, afterHoursFee, total, duration };
+  }, [selectedTime, duration]);
   
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +60,7 @@ export function BookingSection() {
       toast({
         variant: "destructive",
         title: "Missing Information",
-        description: "Please fill out all fields and select a date and time.",
+        description: "Please fill out all fields and select a date, time and duration.",
       });
       return;
     }
@@ -72,6 +82,15 @@ export function BookingSection() {
     setName('');
     setEmail('');
     setPhone('');
+    setDuration(1);
+  };
+
+   const isSlotBooked = (slot: string) => {
+    if (!date) return false;
+    const selectedDateTime = new Date(date);
+    const [hour, minute] = slot.split(':').map(Number);
+    selectedDateTime.setHours(hour, minute, 0, 0);
+    return bookedSlots.includes(selectedDateTime.toISOString());
   };
 
   if (!auth?.user) {
@@ -112,6 +131,7 @@ export function BookingSection() {
                   key={slot}
                   variant={selectedTime === slot ? "default" : "outline"}
                   onClick={() => setSelectedTime(slot)}
+                  disabled={isSlotBooked(slot)}
                   className="w-full"
                 >
                   {slot}
@@ -120,9 +140,23 @@ export function BookingSection() {
             </div>
           </div>
         </div>
+         <Separator className="my-6" />
+         <div>
+            <h3 className="text-xl font-semibold mb-4 font-headline flex items-center gap-2"><Hourglass className="h-5 w-5"/> 2. Select Duration</h3>
+            <RadioGroup defaultValue="1" onValueChange={(value) => setDuration(parseInt(value))} value={duration.toString()} className="flex gap-4">
+                <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="1" id="1hr" />
+                    <Label htmlFor="1hr" className="text-base">1 Hour</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="2" id="2hr" />
+                    <Label htmlFor="2hr" className="text-base">2 Hours</Label>
+                </div>
+            </RadioGroup>
+        </div>
       </div>
       <div className="p-6 md:p-8 bg-muted/30 border-l">
-        <h3 className="text-2xl font-semibold mb-4 font-headline">2. Confirm & Pay</h3>
+        <h3 className="text-2xl font-semibold mb-4 font-headline">3. Confirm & Pay</h3>
         <Card className="bg-card">
           <CardHeader>
             <CardTitle>Booking Summary</CardTitle>
@@ -137,13 +171,13 @@ export function BookingSection() {
                 </div>
                 <div className="flex items-center gap-4">
                   <Clock className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium">{selectedTime} - {(parseInt(selectedTime.split(':')[0], 10) + 1).toString().padStart(2, '0')}:00</span>
+                  <span className="font-medium">{selectedTime} - {(parseInt(selectedTime.split(':')[0], 10) + duration).toString().padStart(2, '0')}:00 ({duration}hr)</span>
                 </div>
                 <Separator />
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>Base Rate (1 hour)</span>
-                    <span className="font-medium">GHS {priceDetails?.baseRate.toFixed(2)}</span>
+                    <span>Base Rate ({duration} hour)</span>
+                    <span className="font-medium">GHS {(priceDetails!.baseRate * duration).toFixed(2)}</span>
                   </div>
                   {priceDetails?.afterHoursFee && priceDetails.afterHoursFee > 0 && (
                     <div className="flex justify-between text-muted-foreground">
@@ -184,7 +218,7 @@ export function BookingSection() {
             ) : (
               <div className="flex flex-col items-center justify-center text-center text-muted-foreground h-64">
                 <Tag className="h-12 w-12 mb-4" />
-                <p>Select a date and time to see your booking summary.</p>
+                <p>Select a date, time, and duration to see your booking summary.</p>
               </div>
             )}
           </CardContent>

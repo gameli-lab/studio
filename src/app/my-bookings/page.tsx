@@ -20,12 +20,21 @@ const mockBookings = [
     { id: '5', date: '2024-08-25', time: '16:00', duration: 1, status: 'Pending' },
 ];
 
-const statusStyles = {
-    Confirmed: 'bg-green-100 text-green-800 border-green-200',
-    Completed: 'bg-blue-100 text-blue-800 border-blue-200',
-    Cancelled: 'bg-red-100 text-red-800 border-red-200',
-    Pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-};
+const getStatusVariant = (status: string) => {
+    switch (status) {
+        case 'Confirmed':
+            return 'default';
+        case 'Completed':
+            return 'secondary';
+        case 'Cancelled':
+            return 'destructive';
+        case 'Pending':
+            return 'outline';
+        default:
+            return 'secondary';
+    }
+}
+
 
 export default function MyBookingsPage() {
     const auth = useContext(AuthContext);
@@ -50,7 +59,7 @@ export default function MyBookingsPage() {
             <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex-grow">
                     <div className="flex items-center gap-4 mb-2">
-                        <Badge className={statusStyles[booking.status as keyof typeof statusStyles]}>{booking.status}</Badge>
+                        <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
                         <p className="text-sm text-muted-foreground">ID: #{booking.id}</p>
                     </div>
                     <div className="flex items-center gap-2 font-semibold">
@@ -63,7 +72,7 @@ export default function MyBookingsPage() {
                     </div>
                 </div>
                 <div className="flex gap-2 self-end sm:self-center">
-                    {booking.status === 'Confirmed' && (
+                    {(booking.status === 'Confirmed' || booking.status === 'Pending') && (
                         <>
                             <Button variant="outline" size="sm">
                                 <RefreshCw className="mr-2 h-4 w-4"/>
