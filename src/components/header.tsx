@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -51,12 +52,28 @@ export function Header() {
     { href: "/#booking", label: "Book Now" },
   ];
   
-  const loggedInNavLinks = [
+  const loggedInUserNavLinks = [
     { href: "/my-bookings", label: "My Bookings" },
     { href: "/settings", label: "Settings" },
   ];
+  
+  const adminNavLinks = [
+      { href: "/admin/dashboard", label: "Dashboard" },
+      { href: "/admin/bookings", label: "Bookings" },
+  ];
 
-  const navLinks = auth?.user ? loggedInNavLinks : loggedOutNavLinks;
+  const getNavLinks = () => {
+      if (!auth?.user) {
+          return loggedOutNavLinks;
+      }
+      if (auth.user.role === 'admin') {
+          return adminNavLinks;
+      }
+      return loggedInUserNavLinks;
+  }
+  
+  const navLinks = getNavLinks();
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -102,8 +119,14 @@ export function Header() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {auth.user.role === 'admin' && <DropdownMenuItem asChild><Link href="/admin/dashboard">Dashboard</Link></DropdownMenuItem>}
-                  <DropdownMenuItem asChild><Link href="/my-bookings">My Bookings</Link></DropdownMenuItem>
+                  {auth.user.role === 'admin' ? (
+                    <>
+                      <DropdownMenuItem asChild><Link href="/admin/dashboard">Dashboard</Link></DropdownMenuItem>
+                      <DropdownMenuItem asChild><Link href="/admin/bookings">Bookings</Link></DropdownMenuItem>
+                    </>
+                  ) : (
+                    <DropdownMenuItem asChild><Link href="/my-bookings">My Bookings</Link></DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild><Link href="/settings">Settings</Link></DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={auth.logout}>Sign Out</DropdownMenuItem>
@@ -128,8 +151,7 @@ export function Header() {
               <span className="sr-only">Toggle Menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="right">
-            <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+          <SheetContent side="right" className="p-0">
              <div className="flex items-center justify-between p-4 border-b">
                 <Link href="/" className="flex items-center gap-2 font-bold">
                     <Logo />
@@ -161,20 +183,10 @@ export function Header() {
                     {auth.user.role === 'admin' && (
                       <SheetClose asChild>
                         <Button variant="outline" className="w-full justify-start" asChild>
-                            <Link href="/admin/dashboard">Dashboard</Link>
+                            <Link href="/settings">Settings</Link>
                         </Button>
                       </SheetClose>
                     )}
-                    <SheetClose asChild>
-                        <Button variant="outline" className="w-full justify-start" asChild>
-                            <Link href="/my-bookings">My Bookings</Link>
-                        </Button>
-                    </SheetClose>
-                    <SheetClose asChild>
-                        <Button variant="outline" className="w-full justify-start" asChild>
-                            <Link href="/settings">Settings</Link>
-                        </Button>
-                    </SheetClose>
                     <Button onClick={auth.logout} className="w-full">Sign Out</Button>
                    </>
                  ) : (
