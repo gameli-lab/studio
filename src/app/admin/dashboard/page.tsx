@@ -1,10 +1,10 @@
 "use client";
 
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useMemo } from 'react';
 import { AuthContext } from '@/contexts/auth-context';
+import { BookingContext } from '@/contexts/booking-context';
 import { useRouter } from 'next/navigation';
 import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AreaChart, BarChart, FileSearch, Users, Calendar, Settings, Bell, LogOut, DollarSign, ListChecks } from 'lucide-react';
 import {
@@ -17,15 +17,12 @@ import {
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { Booking } from '@/contexts/booking-context';
 
-const mockTodayBookings = [
-    { id: '1', user: 'Kwame Appiah', time: '18:00 - 19:00', status: 'Paid', amount: 150 },
-    { id: '2', user: 'Adwoa Mensah', time: '19:00 - 21:00', status: 'Paid', amount: 300 },
-    { id: '5', user: 'Femi Adebayo', time: '16:00 - 17:00', status: 'Unpaid', amount: 100 },
-];
 
 export default function AdminDashboardPage() {
     const auth = useContext(AuthContext);
+    const bookingContext = useContext(BookingContext);
     const router = useRouter();
 
     useEffect(() => {
@@ -34,8 +31,32 @@ export default function AdminDashboardPage() {
         }
     }, [auth.loading, auth.user, router]);
 
+    const todayBookings = useMemo(() => {
+        if (!bookingContext?.bookings) return [];
+        const today = new Date().toISOString().split('T')[0];
+        return bookingContext.bookings.filter(b => b.date === today && b.status !== 'Cancelled');
+    }, [bookingContext?.bookings]);
+    
+    const stats = useMemo(() => {
+        if (!bookingContext?.bookings) return {
+            totalRevenue: 0,
+            totalBookings: 0,
+            occupancyRate: 0,
+        };
 
-    if (auth.loading || auth.user?.role !== 'admin') {
+        const paidBookings = bookingContext.bookings.filter(b => b.status === 'Paid');
+        const totalRevenue = paidBookings.reduce((acc, b) => acc + b.amount, 0);
+
+        return {
+            totalRevenue,
+            totalBookings: bookingContext.bookings.length,
+            // A simple mock for occupancy
+            occupancyRate: Math.round((bookingContext.bookings.filter(b => b.status !== 'Cancelled').length / (15 * 30)) * 100)
+        }
+    }, [bookingContext?.bookings]);
+
+
+    if (auth.loading || auth.user?.role !== 'admin' || !bookingContext) {
         return null; // Or a loading spinner
     }
 
@@ -58,30 +79,9 @@ export default function AdminDashboardPage() {
                         <Calendar className="h-4 w-4" />
                         Bookings
                     </Link>
-                     <a
-                        href="#"
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                    >
-                        <Users className="h-4 w-4" />
-                        Users
-                    </a>
-                     <a
-                        href="#"
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                    >
-                        <DollarSign className="h-4 w-4" />
-                        Payments
-                    </a>
                 </nav>
                 <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
                     <a
-                        href="#"
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                    >
-                        <Bell className="h-4 w-4" />
-                        Notifications
-                    </a>
-                     <a
                         href="#"
                         className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
                     >
@@ -100,7 +100,7 @@ export default function AdminDashboardPage() {
                                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">GHS 45,231.89</div>
+                                <div className="text-2xl font-bold">GHS {stats.totalRevenue.toFixed(2)}</div>
                                 <p className="text-xs text-muted-foreground">+20.1% from last month</p>
                             </CardContent>
                         </Card>
@@ -110,7 +110,7 @@ export default function AdminDashboardPage() {
                                 <ListChecks className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">+2350</div>
+                                <div className="text-2xl font-bold">+{stats.totalBookings}</div>
                                 <p className="text-xs text-muted-foreground">+180.1% from last month</p>
                             </CardContent>
                         </Card>
@@ -130,7 +130,7 @@ export default function AdminDashboardPage() {
                                 <BarChart className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">78%</div>
+                                <div className="text-2xl font-bold">{stats.occupancyRate}%</div>
                                 <p className="text-xs text-muted-foreground">+2% from yesterday</p>
                             </CardContent>
                         </Card>
@@ -151,16 +151,24 @@ export default function AdminDashboardPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {mockTodayBookings.map(booking => (
+                                    {todayBookings.length > 0 ? (
+                                        todayBookings.map(booking => (
                                         <TableRow key={booking.id}>
-                                            <TableCell className="font-medium">{booking.user}</TableCell>
-                                            <TableCell>{booking.time}</TableCell>
+                                            <TableCell className="font-medium">{booking.name}</TableCell>
+                                            <TableCell>{booking.time} - {(parseInt(booking.time.split(':')[0]) + booking.duration).toString().padStart(2, '0')}:00</TableCell>
                                             <TableCell>
-                                                <Badge variant={booking.status === 'Paid' ? 'default' : 'destructive'}>{booking.status}</Badge>
+                                                <Badge variant={booking.status === 'Paid' ? 'default' : 'secondary'}>{booking.status}</Badge>
                                             </TableCell>
                                             <TableCell className="text-right">GHS {booking.amount.toFixed(2)}</TableCell>
                                         </TableRow>
-                                    ))}
+                                    ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="h-24 text-center">
+                                                No bookings for today.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
                                 </TableBody>
                             </Table>
                         </CardContent>

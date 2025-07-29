@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useContext } from 'react';
 import { AuthContext } from '@/contexts/auth-context';
+import { BookingContext, Booking } from '@/contexts/booking-context';
 import { useRouter } from 'next/navigation';
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
@@ -18,24 +19,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 
-const mockAllBookings = [
-    { id: '1', name: 'Kwame Appiah', date: '2024-08-15', time: '18:00', status: 'Paid', amount: 150 },
-    { id: '2', name: 'Adwoa Mensah', date: '2024-08-15', time: '19:00', status: 'Paid', amount: 300 },
-    { id: '3', name: 'Yaw Boakye', date: '2024-08-16', time: '10:00', status: 'Pending', amount: 100 },
-    { id: '4', name: 'Esi Williams', date: '2024-08-16', time: '17:00', status: 'Cancelled', amount: 100 },
-    { id: '5', name: 'Femi Adebayo', date: '2024-08-17', time: '16:00', status: 'Unpaid', amount: 100 },
-    { id: '6', name: 'Ngozi Eze', date: '2024-08-17', time: '20:00', status: 'Paid', amount: 150 },
-];
-
-type Booking = typeof mockAllBookings[0];
 
 export default function AdminBookingsPage() {
     const auth = useContext(AuthContext);
+    const bookingContext = useContext(BookingContext);
     const router = useRouter();
     const { toast } = useToast();
 
-    const [date, setDate] = useState<Date | undefined>(new Date());
-    const [bookings, setBookings] = useState(mockAllBookings);
+    const [date, setDate] = useState<Date | undefined>(undefined);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
 
@@ -51,13 +42,14 @@ export default function AdminBookingsPage() {
     }, [auth.loading, auth.user, router]);
     
     const filteredBookings = useMemo(() => {
-        return bookings.filter(booking => {
+        if (!bookingContext?.bookings) return [];
+        return bookingContext.bookings.filter(booking => {
             const matchesSearch = booking.name.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesStatus = statusFilter === 'all' || booking.status.toLowerCase() === statusFilter;
             const matchesDate = !date || new Date(booking.date).toDateString() === date.toDateString();
             return matchesSearch && matchesStatus && matchesDate;
-        });
-    }, [bookings, searchTerm, statusFilter, date]);
+        }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }, [bookingContext?.bookings, searchTerm, statusFilter, date]);
 
     const handleEditClick = (booking: Booking) => {
         setSelectedBooking(booking);
@@ -71,29 +63,49 @@ export default function AdminBookingsPage() {
 
     const confirmCancellation = () => {
         if (selectedBooking) {
-            setBookings(bookings.map(b => b.id === selectedBooking.id ? { ...b, status: 'Cancelled' } : b));
+            bookingContext?.cancelBooking(selectedBooking.id);
             toast({ title: "Booking Cancelled", description: `Booking #${selectedBooking.id} has been cancelled.` });
         }
         setCancelDialogOpen(false);
         setSelectedBooking(null);
     };
 
-     const handleSaveBooking = (e: React.FormEvent) => {
+     const handleSaveBooking = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // In a real app, you would handle form submission to your API
-        toast({ title: "Booking Saved", description: `Booking details for ${selectedBooking?.name} have been updated.`});
+        if (!selectedBooking) return;
+
+        const formData = new FormData(e.currentTarget);
+        const updatedBooking: Booking = {
+            ...selectedBooking,
+            name: formData.get('name') as string,
+            date: formData.get('date') as string,
+            time: formData.get('time') as string,
+            status: formData.get('status') as Booking['status'],
+        };
+        
+        bookingContext?.updateBooking(updatedBooking);
+        toast({ title: "Booking Saved", description: `Booking details for ${updatedBooking.name} have been updated.`});
         setEditDialogOpen(false);
     };
     
-    const handleCreateBooking = (e: React.FormEvent) => {
+    const handleCreateBooking = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // In a real app, you would handle form submission to your API
-        toast({ title: "Booking Created", description: `A new booking has been created.`});
+        const formData = new FormData(e.currentTarget);
+        const newBookingData = {
+            name: formData.get('name') as string,
+            date: formData.get('date') as string,
+            time: formData.get('time') as string,
+            duration: parseInt(formData.get('duration') as string || '1'),
+            status: formData.get('status') as Booking['status'],
+        };
+
+        bookingContext?.addBooking(newBookingData);
+        toast({ title: "Booking Created", description: `A new booking for ${newBookingData.name} has been created.`});
         setCreateDialogOpen(false);
     };
 
 
-    if (auth.loading || auth.user?.role !== 'admin') {
+    if (auth.loading || auth.user?.role !== 'admin' || !bookingContext) {
         return null;
     }
 
@@ -181,7 +193,7 @@ export default function AdminBookingsPage() {
                                                 <TableCell>
                                                     <Badge 
                                                       variant={
-                                                        booking.status === 'Paid' ? 'default' : 
+                                                        booking.status === 'Paid' || booking.status === 'Confirmed' ? 'default' : 
                                                         booking.status === 'Cancelled' ? 'destructive' : 'secondary'
                                                       }
                                                     >
@@ -220,8 +232,9 @@ export default function AdminBookingsPage() {
                                 <Calendar
                                     mode="single"
                                     selected={date}
-                                    onSelect={setDate}
+                                    onSelect={(d) => setDate(d)}
                                     className="rounded-md border"
+                                    footer={date && <Button variant="outline" className="mt-2 w-full" onClick={() => setDate(undefined)}>Clear</Button>}
                                 />
                             </CardContent>
                         </Card>
@@ -242,19 +255,25 @@ export default function AdminBookingsPage() {
                         <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="name" className="text-right">Name</Label>
-                                <Input id="name" defaultValue={selectedBooking?.name} className="col-span-3" />
+                                <Input id="name" name="name" defaultValue={selectedBooking?.name} className="col-span-3" />
                             </div>
                              <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="date" className="text-right">Date</Label>
-                                <Input id="date" type="date" defaultValue={selectedBooking?.date} className="col-span-3" />
+                                <Input id="date" name="date" type="date" defaultValue={selectedBooking?.date} className="col-span-3" />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="time" className="text-right">Time</Label>
-                                <Input id="time" type="time" defaultValue={selectedBooking?.time} className="col-span-3" />
+                                <Input id="time" name="time" type="time" defaultValue={selectedBooking?.time} className="col-span-3" />
                             </div>
+                             {isCreateDialogOpen && (
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="duration" className="text-right">Duration</Label>
+                                    <Input id="duration" name="duration" type="number" defaultValue="1" className="col-span-3" />
+                                </div>
+                            )}
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="status" className="text-right">Status</Label>
-                                 <Select defaultValue={selectedBooking?.status}>
+                                 <Select name="status" defaultValue={selectedBooking?.status}>
                                     <SelectTrigger className="col-span-3">
                                         <SelectValue placeholder="Select status" />
                                     </SelectTrigger>
@@ -263,12 +282,17 @@ export default function AdminBookingsPage() {
                                         <SelectItem value="Unpaid">Unpaid</SelectItem>
                                         <SelectItem value="Pending">Pending</SelectItem>
                                         <SelectItem value="Cancelled">Cancelled</SelectItem>
+                                        <SelectItem value="Confirmed">Confirmed</SelectItem>
+                                        <SelectItem value="Completed">Completed</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => isCreateDialogOpen ? setCreateDialogOpen(false) : setEditDialogOpen(false)}>Cancel</Button>
+                            <Button type="button" variant="outline" onClick={() => {
+                                if (isCreateDialogOpen) setCreateDialogOpen(false);
+                                if (isEditDialogOpen) setEditDialogOpen(false);
+                            }}>Cancel</Button>
                             <Button type="submit">Save</Button>
                         </DialogFooter>
                     </form>

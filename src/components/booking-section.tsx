@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useContext } from 'react';
+import { useState, useMemo, useContext, useEffect } from 'react';
 import Link from 'next/link';
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -12,19 +12,13 @@ import { useToast } from "@/hooks/use-toast";
 import { CalendarDays, Clock, Tag, Wallet, Lock, Hourglass } from "lucide-react";
 import { AuthContext } from '@/contexts/auth-context';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { BookingContext, Booking } from '@/contexts/booking-context';
 
 // Assuming slots from 8 AM to 10 PM (22:00)
 const timeSlots = Array.from({ length: 15 }, (_, i) => {
   const hour = i + 8;
   return `${hour.toString().padStart(2, '0')}:00`;
 });
-
-// Mocking some booked slots for demonstration
-const bookedSlots = [
-    '2024-08-20T10:00:00.000Z',
-    '2024-08-20T14:00:00.000Z',
-    '2024-08-22T11:00:00.000Z',
-];
 
 
 export function BookingSection() {
@@ -35,8 +29,18 @@ export function BookingSection() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const { toast } = useToast();
   const auth = useContext(AuthContext);
+  const bookingContext = useContext(BookingContext);
+
+  useEffect(() => {
+    if (auth?.user) {
+      setName(auth.user.name);
+      setEmail(auth.user.email);
+    }
+  }, [auth?.user]);
+
 
   const priceDetails = useMemo(() => {
     if (!selectedTime) return null;
@@ -56,11 +60,11 @@ export function BookingSection() {
   
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!date || !selectedTime || !name || !email || !phone) {
+    if (!date || !selectedTime || !name || !email) {
       toast({
         variant: "destructive",
         title: "Missing Information",
-        description: "Please fill out all fields and select a date, time and duration.",
+        description: "Please fill out all required fields and select a date, time and duration.",
       });
       return;
     }
@@ -70,6 +74,15 @@ export function BookingSection() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
     
+    bookingContext?.addBooking({
+      name,
+      email,
+      phone,
+      date: date.toISOString().split('T')[0], // YYYY-MM-DD
+      time: selectedTime,
+      duration,
+    });
+
     setIsSubmitting(false);
 
     toast({
@@ -79,18 +92,20 @@ export function BookingSection() {
     
     // Reset form
     setSelectedTime(null);
-    setName('');
-    setEmail('');
     setPhone('');
     setDuration(1);
   };
 
-   const isSlotBooked = (slot: string) => {
-    if (!date) return false;
-    const selectedDateTime = new Date(date);
-    const [hour, minute] = slot.split(':').map(Number);
-    selectedDateTime.setHours(hour, minute, 0, 0);
-    return bookedSlots.includes(selectedDateTime.toISOString());
+  const isSlotBooked = (slot: string) => {
+    if (!date || !bookingContext?.bookings) return false;
+    
+    const selectedDateString = date.toISOString().split('T')[0];
+
+    return bookingContext.bookings.some(booking => 
+        booking.date === selectedDateString &&
+        booking.time === slot &&
+        booking.status !== 'Cancelled'
+    );
   };
 
   if (!auth?.user) {
@@ -202,8 +217,8 @@ export function BookingSection() {
                     <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" type="tel" placeholder="024 123 4567" value={phone} onChange={e => setPhone(e.target.value)} required />
+                    <Label htmlFor="phone">Phone Number (Optional)</Label>
+                    <Input id="phone" type="tel" placeholder="024 123 4567" value={phone} onChange={e => setPhone(e.target.value)} />
                   </div>
                   <Button type="submit" className="w-full text-lg py-6" size="lg" disabled={isSubmitting}>
                     {isSubmitting ? 'Processing...' : (

@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/contexts/auth-context';
+import { BookingProvider } from '@/contexts/booking-context';
 
 export const metadata: Metadata = {
   title: 'AstroBook',
@@ -22,7 +23,9 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AuthProvider>
-          {children}
+          <BookingProvider>
+            {children}
+          </BookingProvider>
           <Toaster />
         </AuthProvider>
       </body>

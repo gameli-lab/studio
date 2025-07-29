@@ -7,28 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, X, CheckCircle, RefreshCw } from 'lucide-react';
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useMemo } from "react";
 import { AuthContext } from "@/contexts/auth-context";
+import { BookingContext, Booking } from "@/contexts/booking-context";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-const mockBookings = [
-    { id: '1', date: '2024-08-15', time: '18:00', duration: 1, status: 'Confirmed' },
-    { id: '2', date: '2024-08-22', time: '19:00', duration: 2, status: 'Confirmed' },
-    { id: '3', date: '2024-07-20', time: '10:00', duration: 1, status: 'Completed' },
-    { id: '4', date: '2024-06-11', time: '17:00', duration: 1, status: 'Cancelled' },
-    { id: '5', date: '2024-08-25', time: '16:00', duration: 1, status: 'Pending' },
-];
 
-const getStatusVariant = (status: string) => {
+const getStatusVariant = (status: Booking['status']) => {
     switch (status) {
         case 'Confirmed':
+        case 'Paid':
             return 'default';
         case 'Completed':
             return 'secondary';
         case 'Cancelled':
             return 'destructive';
         case 'Pending':
+        case 'Unpaid':
             return 'outline';
         default:
             return 'secondary';
@@ -38,6 +34,7 @@ const getStatusVariant = (status: string) => {
 
 export default function MyBookingsPage() {
     const auth = useContext(AuthContext);
+    const bookingContext = useContext(BookingContext);
     const router = useRouter();
 
     useEffect(() => {
@@ -45,16 +42,20 @@ export default function MyBookingsPage() {
             router.push('/login');
         }
     }, [auth?.loading, auth?.user, router]);
+    
+    const userBookings = useMemo(() => {
+        if (!auth?.user || !bookingContext?.bookings) return [];
+        return bookingContext.bookings.filter(b => b.email === auth.user?.email || b.name === auth.user?.name);
+    }, [auth?.user, bookingContext?.bookings]);
 
-
-    if (auth?.loading || !auth?.user) {
+    const upcomingBookings = userBookings.filter(b => (b.status === 'Confirmed' || b.status === 'Pending' || b.status === 'Paid') && new Date(b.date) >= new Date());
+    const pastBookings = userBookings.filter(b => b.status === 'Completed' || b.status === 'Cancelled' || new Date(b.date) < new Date());
+    
+    if (auth?.loading || !auth?.user || !bookingContext) {
         return null; // Or a loading spinner
     }
 
-    const upcomingBookings = mockBookings.filter(b => (b.status === 'Confirmed' || b.status === 'Pending') && new Date(b.date) >= new Date());
-    const pastBookings = mockBookings.filter(b => b.status === 'Completed' || b.status === 'Cancelled' || new Date(b.date) < new Date());
-    
-    const BookingCard = ({ booking }: { booking: typeof mockBookings[0] }) => (
+    const BookingCard = ({ booking }: { booking: Booking }) => (
         <Card>
             <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex-grow">
@@ -72,13 +73,13 @@ export default function MyBookingsPage() {
                     </div>
                 </div>
                 <div className="flex gap-2 self-end sm:self-center">
-                    {(booking.status === 'Confirmed' || booking.status === 'Pending') && (
+                    {(booking.status === 'Confirmed' || booking.status === 'Pending' || booking.status === 'Paid') && (
                         <>
                             <Button variant="outline" size="sm">
                                 <RefreshCw className="mr-2 h-4 w-4"/>
                                 Reschedule
                             </Button>
-                            <Button variant="destructive" size="sm">
+                            <Button variant="destructive" size="sm" onClick={() => bookingContext.cancelBooking(booking.id)}>
                                 <X className="mr-2 h-4 w-4"/>
                                 Cancel
                             </Button>
