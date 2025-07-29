@@ -1,23 +1,59 @@
 
 "use client";
 
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 import { AuthContext } from '@/contexts/auth-context';
 import { Button } from './ui/button';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { CalendarClock, Sparkles } from 'lucide-react';
 import { BookingSection } from './booking-section';
+import { BookingContext } from '@/contexts/booking-context';
+
+const timeSlots = Array.from({ length: 15 }, (_, i) => {
+  const hour = i + 8;
+  return `${hour.toString().padStart(2, '0')}:00`;
+});
 
 export function UserDashboard() {
   const auth = useContext(AuthContext);
+  const bookingContext = useContext(BookingContext);
+
+  const nextAvailableSlot = useMemo(() => {
+    if (!bookingContext) return "Loading...";
+
+    const now = new Date();
+    let currentDate = new Date(now);
+    currentDate.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < 30; i++) { // Check for the next 30 days
+        const dateString = currentDate.toISOString().split('T')[0];
+        const bookingsForDay = bookingContext.bookings.filter(b => b.date === dateString && b.status !== 'Cancelled');
+        
+        for (const slot of timeSlots) {
+            const [hour, minute] = slot.split(':').map(Number);
+            const slotTime = new Date(currentDate);
+            slotTime.setHours(hour, minute, 0, 0);
+
+            if (slotTime < now) continue;
+
+            const isBooked = bookingsForDay.some(b => b.time === slot);
+            if (!isBooked) {
+                const day = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : `on ${slotTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`;
+                return `${day}: ${slot}`;
+            }
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return "No slots available soon.";
+  }, [bookingContext]);
+
 
   if (!auth?.user) {
     return null;
   }
   
-  const nextAvailableSlot = "Today: 4:00 PM - 5:00 PM";
-
   return (
     <>
       <div className="bg-primary/5 border-b">

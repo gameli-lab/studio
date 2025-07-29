@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useContext, useEffect } from 'react';
@@ -108,6 +109,15 @@ export function BookingSection() {
     );
   };
 
+  const isSlotInPast = (slot: string) => {
+    if (!date) return false;
+    const now = new Date();
+    const [hour, minute] = slot.split(':').map(Number);
+    const slotTime = new Date(date);
+    slotTime.setHours(hour, minute, 0, 0);
+    return slotTime < now;
+  };
+
   if (!auth?.user) {
     return (
         <div className="flex flex-col items-center justify-center p-12 text-center bg-muted/30">
@@ -134,7 +144,10 @@ export function BookingSection() {
           <Calendar
             mode="single"
             selected={date}
-            onSelect={setDate}
+            onSelect={(d) => {
+                setDate(d);
+                setSelectedTime(null); // Reset time when date changes
+            }}
             disabled={(day) => day < new Date(new Date().setDate(new Date().getDate() - 1))}
             className="rounded-md border self-start"
           />
@@ -146,7 +159,7 @@ export function BookingSection() {
                   key={slot}
                   variant={selectedTime === slot ? "default" : "outline"}
                   onClick={() => setSelectedTime(slot)}
-                  disabled={isSlotBooked(slot)}
+                  disabled={isSlotBooked(slot) || isSlotInPast(slot)}
                   className="w-full"
                 >
                   {slot}
