@@ -23,14 +23,7 @@ interface BookingContextType {
 
 export const BookingContext = createContext<BookingContextType | null>(null);
 
-const initialBookings: Booking[] = [
-    { id: '1', name: 'Kwame Appiah', date: '2024-08-15', time: '18:00', duration: 1, status: 'Paid', amount: 150 },
-    { id: '2', name: 'Adwoa Mensah', date: '2024-08-15', time: '19:00', duration: 2, status: 'Paid', amount: 300 },
-    { id: '3', name: 'Yaw Boakye', date: '2024-08-16', time: '10:00', duration: 1, status: 'Pending', amount: 100 },
-    { id: '4', name: 'Esi Williams', date: '2024-08-16', time: '17:00', duration: 1, status: 'Cancelled', amount: 100 },
-    { id: '5', name: 'Femi Adebayo', date: '2024-08-17', time: '16:00', duration: 1, status: 'Unpaid', amount: 100 },
-    { id: '6', name: 'Ngozi Eze', date: '2024-08-17', time: '20:00', duration: 1, status: 'Paid', amount: 150 },
-];
+const initialBookings: Booking[] = [];
 
 export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
