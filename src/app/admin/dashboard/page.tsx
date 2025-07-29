@@ -3,6 +3,7 @@
 import { useContext, useEffect, useMemo } from 'react';
 import { AuthContext } from '@/contexts/auth-context';
 import { BookingContext } from '@/contexts/booking-context';
+import { UserContext } from '@/contexts/user-context';
 import { useRouter } from 'next/navigation';
 import { Header } from "@/components/header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -22,6 +23,7 @@ import { Booking } from '@/contexts/booking-context';
 export default function AdminDashboardPage() {
     const auth = useContext(AuthContext);
     const bookingContext = useContext(BookingContext);
+    const userContext = useContext(UserContext);
     const router = useRouter();
 
     useEffect(() => {
@@ -55,7 +57,7 @@ export default function AdminDashboardPage() {
     }, [bookingContext?.bookings]);
 
 
-    if (auth.loading || auth.user?.role !== 'admin' || !bookingContext) {
+    if (auth.loading || auth.user?.role !== 'admin' || !bookingContext || !userContext) {
         return null; // Or a loading spinner
     }
 
@@ -90,7 +92,7 @@ export default function AdminDashboardPage() {
                             <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">+573</div>
+                            <div className="text-2xl font-bold">+{userContext.users.length}</div>
                             <p className="text-xs text-muted-foreground">+19% from last month</p>
                         </CardContent>
                     </Card>
