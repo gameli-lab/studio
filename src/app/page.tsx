@@ -9,15 +9,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookingSection } from "@/components/booking-section";
 import { Testimonials } from "@/components/testimonials";
-import { ShowerHead, Users, Moon, Sun, Shirt, ParkingCircle } from 'lucide-react';
+import { Users, Moon, Sun, ParkingCircle } from 'lucide-react';
 import { UserDashboard } from "@/components/user-dashboard";
 import { AuthContext } from '@/contexts/auth-context';
 
 const amenities = [
-  { icon: <ShowerHead className="h-8 w-8 text-primary" />, text: "Changing Rooms" },
   { icon: <Users className="h-8 w-8 text-primary" />, text: "Spacious Spectator Area" },
   { icon: <ParkingCircle className="h-8 w-8 text-primary" />, text: "Ample Parking" },
-  { icon: <Shirt className="h-8 w-8 text-primary" />, text: "Bibs Provided" },
   { icon: <Sun className="h-8 w-8 text-primary" />, text: "Day & Night Games" },
   { icon: <Moon className="h-8 w-8 text-primary" />, text: "Bright Floodlights" },
 ];
@@ -42,7 +40,7 @@ function LandingPage() {
 
       <section id="about" className="container mx-auto px-4 pb-16 md:pb-24">
         <h2 className="text-4xl font-headline font-bold text-center mb-12">Our World-Class Amenities</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 text-center">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
           {amenities.map((item, index) => (
             <div key={index} className="flex flex-col items-center gap-4 p-4 rounded-lg transition-transform transform hover:scale-105">
               {item.icon}
