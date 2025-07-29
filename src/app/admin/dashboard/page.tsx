@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 const mockTodayBookings = [
     { id: '1', user: 'Kwame Appiah', time: '18:00 - 19:00', status: 'Paid', amount: 150 },
@@ -43,20 +44,20 @@ export default function AdminDashboardPage() {
             <aside className="fixed inset-y-0 left-0 z-10 hidden w-60 flex-col border-r bg-background sm:flex">
                 <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
                      <h1 className="text-2xl font-bold font-headline text-primary">AstroBook</h1>
-                     <a
-                        href="#"
+                     <Link
+                        href="/admin/dashboard"
                         className="flex w-full items-center gap-3 rounded-lg bg-primary text-primary-foreground px-3 py-2 transition-all"
                     >
                         <AreaChart className="h-4 w-4" />
                         Dashboard
-                    </a>
-                     <a
-                        href="#"
+                    </Link>
+                     <Link
+                        href="/admin/bookings"
                         className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
                     >
                         <Calendar className="h-4 w-4" />
                         Bookings
-                    </a>
+                    </Link>
                      <a
                         href="#"
                         className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
