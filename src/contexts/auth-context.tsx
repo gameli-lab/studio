@@ -54,7 +54,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (userContext) {
       userContext.addUser(userWithAvatar);
     }
-    router.push('/');
+
+    if (userWithAvatar.role === 'admin') {
+        router.push('/admin/dashboard');
+    } else {
+        router.push('/');
+    }
   };
 
   const logout = () => {
