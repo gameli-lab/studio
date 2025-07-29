@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
+import React from 'react';
 
 const Logo = () => (
   <svg
@@ -59,6 +60,7 @@ export function Header() {
             </Button>
           </SheetTrigger>
           <SheetContent side="right">
+            <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
             <div className="grid gap-6 p-6">
               <Link href="/" className="flex items-center gap-2 font-bold text-lg">
                  <Logo />
