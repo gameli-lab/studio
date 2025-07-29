@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from '@/hooks/use-toast';
-import { User, Mail, Phone, KeyRound } from 'lucide-react';
+import { User, Mail, Phone, KeyRound, Camera } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 export default function SettingsPage() {
     const auth = useContext(AuthContext);
@@ -20,7 +21,8 @@ export default function SettingsPage() {
 
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState(''); // Assuming phone is not in user object yet
+    const [phone, setPhone] = useState('');
+    const [avatar, setAvatar] = useState('');
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,6 +33,7 @@ export default function SettingsPage() {
         } else if (auth?.user) {
             setName(auth.user.name);
             setEmail(auth.user.email);
+            setAvatar(auth.user.avatar || `https://placehold.co/100x100.png?text=${auth.user.name.charAt(0)}`);
         }
     }, [auth?.loading, auth?.user, router]);
     
@@ -42,7 +45,7 @@ export default function SettingsPage() {
     const handleProfileUpdate = (e: React.FormEvent) => {
         e.preventDefault();
         if (auth?.user) {
-            auth.updateUser({ ...auth.user, name, email });
+            auth.updateUser({ ...auth.user, name, email, avatar });
             toast({ title: "Profile Updated", description: "Your profile information has been saved." });
         }
     }
@@ -62,6 +65,16 @@ export default function SettingsPage() {
         setNewPassword('');
         setConfirmPassword('');
     }
+    
+    const handleAvatarChange = () => {
+        // Mock avatar change. In a real app, this would open a file dialog.
+        const newAvatar = `https://placehold.co/100x100.png?text=${name.charAt(0)}${Math.floor(Math.random() * 10)}`;
+        setAvatar(newAvatar);
+        if (auth?.user) {
+            auth.updateUser({ ...auth.user, name, email, avatar: newAvatar });
+            toast({ title: "Avatar Updated", description: "Your new profile picture has been saved."});
+        }
+    }
 
     if (auth?.loading || !auth?.user) {
         return null; // Or a loading spinner
@@ -78,13 +91,25 @@ export default function SettingsPage() {
                                 <User />
                                 Edit Profile
                             </CardTitle>
-                            <CardDescription>Update your personal information.</CardDescription>
+                            <CardDescription>Update your personal information and profile picture.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                             <form onSubmit={handleProfileUpdate} className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="name">Full Name</Label>
-                                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+                             <form onSubmit={handleProfileUpdate} className="space-y-6">
+                                <div className="flex items-center gap-6">
+                                    <div className="relative">
+                                        <Avatar className="h-24 w-24">
+                                            <AvatarImage src={avatar} alt={name} />
+                                            <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <Button type="button" size="icon" className="absolute bottom-0 right-0 rounded-full" onClick={handleAvatarChange}>
+                                            <Camera className="h-4 w-4" />
+                                            <span className="sr-only">Change Photo</span>
+                                        </Button>
+                                    </div>
+                                    <div className="flex-grow space-y-2">
+                                        <Label htmlFor="name">Full Name</Label>
+                                        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="email">Email Address</Label>

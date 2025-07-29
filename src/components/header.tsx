@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from '@/components/ui/sheet';
-import { Menu, UserCircle, Moon, Sun } from 'lucide-react';
+import { Menu, Moon, Sun } from 'lucide-react';
 import React, { useContext } from 'react';
 import { AuthContext } from '@/contexts/auth-context';
 import {
@@ -15,6 +15,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from 'next-themes';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+
 
 const Logo = () => (
   <svg
@@ -85,13 +87,20 @@ export function Header() {
             {auth?.user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2">
-                    <UserCircle />
-                    {auth.user.name}
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                     <Avatar>
+                        <AvatarImage src={auth.user.avatar} alt={auth.user.name} />
+                        <AvatarFallback>{auth.user.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{auth.user.name}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{auth.user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {auth.user.role === 'admin' && <DropdownMenuItem asChild><Link href="/admin/dashboard">Dashboard</Link></DropdownMenuItem>}
                   <DropdownMenuItem asChild><Link href="/my-bookings">My Bookings</Link></DropdownMenuItem>

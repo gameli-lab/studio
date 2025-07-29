@@ -8,6 +8,7 @@ interface User {
   name: string;
   email: string;
   role: 'user' | 'admin';
+  avatar?: string;
 }
 
 interface AuthContextType {
@@ -41,8 +42,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = (userData: User) => {
-    localStorage.setItem('astrobook-user', JSON.stringify(userData));
-    setUser(userData);
+    const userWithAvatar = {
+        ...userData,
+        avatar: userData.avatar || `https://placehold.co/100x100.png?text=${userData.name.charAt(0)}`
+    }
+    localStorage.setItem('astrobook-user', JSON.stringify(userWithAvatar));
+    setUser(userWithAvatar);
     router.push('/');
   };
 
