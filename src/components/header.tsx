@@ -42,9 +42,9 @@ export function Header() {
   const auth = useContext(AuthContext);
 
   const navLinks = [
-    { href: "#about", label: "About" },
-    { href: "#gallery", label: "Gallery" },
-    { href: "#booking", label: "Book Now" },
+    { href: "/#about", label: "About" },
+    { href: "/#gallery", label: "Gallery" },
+    { href: "/#booking", label: "Book Now" },
   ];
 
   return (
@@ -70,12 +70,12 @@ export function Header() {
                   {auth.user.name}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {auth.user.role === 'admin' && <DropdownMenuItem>Dashboard</DropdownMenuItem>}
-                <DropdownMenuItem>My Bookings</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
+                {auth.user.role === 'admin' && <DropdownMenuItem asChild><Link href="/admin/dashboard">Dashboard</Link></DropdownMenuItem>}
+                <DropdownMenuItem asChild><Link href="/my-bookings">My Bookings</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/settings">Settings</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={auth.logout}>Sign Out</DropdownMenuItem>
               </DropdownMenuContent>
@@ -100,11 +100,11 @@ export function Header() {
           </SheetTrigger>
           <SheetContent side="right">
             <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+             <div className="flex items-center gap-2 p-4 border-b">
+                <Logo />
+                <span className="font-headline text-lg font-bold">AstroBook</span>
+              </div>
             <div className="grid gap-6 p-6">
-              <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-                 <Logo />
-                 <span className="font-headline">AstroBook</span>
-              </Link>
               <nav className="grid gap-4">
                 {navLinks.map((link) => (
                   <SheetClose key={link.href} asChild>
@@ -114,18 +114,32 @@ export function Header() {
                   </SheetClose>
                 ))}
               </nav>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 border-t pt-6">
                  {auth?.user ? (
                    <>
+                    {auth.user.role === 'admin' && (
+                      <SheetClose asChild>
+                        <Button variant="outline" className="w-full justify-start" asChild>
+                            <Link href="/admin/dashboard">Dashboard</Link>
+                        </Button>
+                      </SheetClose>
+                    )}
                     <SheetClose asChild>
-                      <Button variant="outline" className="w-full">Dashboard</Button>
+                        <Button variant="outline" className="w-full justify-start" asChild>
+                            <Link href="/my-bookings">My Bookings</Link>
+                        </Button>
+                    </SheetClose>
+                    <SheetClose asChild>
+                        <Button variant="outline" className="w-full justify-start" asChild>
+                            <Link href="/settings">Settings</Link>
+                        </Button>
                     </SheetClose>
                     <Button onClick={auth.logout} className="w-full">Sign Out</Button>
                    </>
                  ) : (
                   <>
                     <SheetClose asChild>
-                      <Button variant="ghost" className="w-full" asChild>
+                      <Button variant="ghost" className="w-full justify-start" asChild>
                         <Link href="/login">Sign In</Link>
                       </Button>
                     </SheetClose>

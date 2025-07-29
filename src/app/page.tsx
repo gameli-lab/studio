@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookingSection } from "@/components/booking-section";
 import { Testimonials } from "@/components/testimonials";
 import { ShowerHead, Users, Moon, Sun, Shirt, ParkingCircle } from 'lucide-react';
+import { UserDashboard } from "@/components/user-dashboard";
 
 const amenities = [
   { icon: <ShowerHead className="h-8 w-8 text-primary" />, text: "Changing Rooms" },
@@ -28,7 +29,9 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <main className="flex-grow">
-        <section id="home" className="container mx-auto px-4 py-16 md:py-24 text-center">
+        <UserDashboard />
+        
+        <section id="home" className="container mx-auto px-4 pt-16 md:pt-24 text-center">
           <Badge variant="outline" className="mb-4 text-primary border-primary">Welcome to Adeiso</Badge>
           <h1 className="text-5xl md:text-6xl font-headline font-bold mb-4">Adeiso Astro Turf</h1>
           <p className="text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground mb-8">
