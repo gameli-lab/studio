@@ -1,8 +1,10 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/contexts/auth-context';
 import { BookingProvider } from '@/contexts/booking-context';
+import { UserProvider } from '@/contexts/user-context';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
@@ -30,10 +32,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <BookingProvider>
-              {children}
-            </BookingProvider>
-            <Toaster />
+            <UserProvider>
+              <BookingProvider>
+                {children}
+              </BookingProvider>
+              <Toaster />
+            </UserProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -1,9 +1,11 @@
+
 "use client";
 
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
 import { useRouter } from 'next/navigation';
+import { UserContext } from './user-context';
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
@@ -25,6 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const userContext = useContext(UserContext);
 
   useEffect(() => {
     // Try to load user from localStorage on initial load
@@ -48,6 +51,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     localStorage.setItem('astrobook-user', JSON.stringify(userWithAvatar));
     setUser(userWithAvatar);
+    if (userContext) {
+      userContext.addUser(userWithAvatar);
+    }
     router.push('/');
   };
 
@@ -60,6 +66,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const updateUser = (userData: User) => {
     localStorage.setItem('astrobook-user', JSON.stringify(userData));
     setUser(userData);
+     if (userContext) {
+      userContext.updateUser(userData);
+    }
   };
 
   const value = { user, login, logout, updateUser, loading };

@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from '@/components/ui/sheet';
-import { Menu, Moon, Sun } from 'lucide-react';
+import { Menu, Moon, Sun, Users } from 'lucide-react';
 import React, { useContext } from 'react';
 import { AuthContext } from '@/contexts/auth-context';
 import {
@@ -60,6 +60,7 @@ export function Header() {
   const adminNavLinks = [
       { href: "/admin/dashboard", label: "Dashboard" },
       { href: "/admin/bookings", label: "Bookings" },
+      { href: "/admin/users", label: "Users" },
   ];
 
   const getNavLinks = () => {
@@ -123,6 +124,7 @@ export function Header() {
                     <>
                       <DropdownMenuItem asChild><Link href="/admin/dashboard">Dashboard</Link></DropdownMenuItem>
                       <DropdownMenuItem asChild><Link href="/admin/bookings">Bookings</Link></DropdownMenuItem>
+                       <DropdownMenuItem asChild><Link href="/admin/users">Users</Link></DropdownMenuItem>
                     </>
                   ) : (
                     <DropdownMenuItem asChild><Link href="/my-bookings">My Bookings</Link></DropdownMenuItem>

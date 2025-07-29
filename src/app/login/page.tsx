@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useContext, useState } from 'react';
@@ -9,32 +10,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthContext } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import { UserContext } from '@/contexts/user-context';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const auth = useContext(AuthContext);
+    const userContext = useContext(UserContext);
     const router = useRouter();
     const { toast } = useToast();
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
+
+        const user = userContext?.users.find(u => u.email === email);
         
-        // This is a mock login. In a real app, you'd call an API.
-        if (email === 'admin@astrobook.com' && password === 'password') {
-            auth?.login({
-                id: 'admin01',
-                name: 'Admin User',
-                email: 'admin@astrobook.com',
-                role: 'admin',
-            });
-        } else if (email === 'user@astrobook.com' && password === 'password') {
-             auth?.login({
-                id: 'user01',
-                name: 'Normal User',
-                email: 'user@astrobook.com',
-                role: 'user',
-            });
+        // This is a mock login. In a real app, you'd check a hashed password.
+        if (user && password === 'password') {
+            auth?.login(user);
         } else {
             toast({
                 variant: 'destructive',
