@@ -14,11 +14,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { PlusCircle, MoreHorizontal, Search, Filter, AreaChart } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Search, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
-import Link from 'next/link';
-
 
 export default function AdminBookingsPage() {
     const auth = useContext(AuthContext);
@@ -111,29 +109,10 @@ export default function AdminBookingsPage() {
 
     return (
         <div className="flex min-h-screen w-full flex-col bg-muted/40">
-            <aside className="fixed inset-y-0 left-0 z-10 hidden w-60 flex-col border-r bg-background sm:flex">
-                 <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
-                    <h1 className="text-2xl font-bold font-headline text-primary">AstroBook</h1>
-                    <Link
-                        href="/admin/dashboard"
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                    >
-                        <AreaChart className="h-4 w-4" />
-                        Dashboard
-                    </Link>
-                    <Link
-                        href="/admin/bookings"
-                        className="flex w-full items-center gap-3 rounded-lg bg-primary px-3 py-2 text-primary-foreground transition-all"
-                    >
-                        <Calendar className="h-4 w-4" />
-                        Bookings
-                    </Link>
-                </nav>
-            </aside>
-            <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-60">
-                <Header />
-                <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 lg:grid-cols-3 xl:grid-cols-3">
-                    <div className="lg:col-span-2 xl:col-span-2 grid auto-rows-max items-start gap-4 md:gap-8">
+            <Header />
+            <main className="flex-grow p-4 sm:px-6 sm:py-6 md:gap-8">
+                 <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+                    <div className="lg:col-span-2">
                         <Card>
                             <CardHeader className="flex flex-row items-center">
                                 <div className="grid gap-2">
@@ -150,7 +129,7 @@ export default function AdminBookingsPage() {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex items-center gap-4 mb-4">
+                                <div className="flex flex-col sm:flex-row items-center gap-4 mb-4">
                                      <div className="relative w-full">
                                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                         <Input
@@ -162,9 +141,11 @@ export default function AdminBookingsPage() {
                                         />
                                     </div>
                                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                        <SelectTrigger className="w-[180px]">
-                                            <Filter className="h-4 w-4 mr-2"/>
-                                            <SelectValue placeholder="Filter by status" />
+                                        <SelectTrigger className="w-full sm:w-[200px] mt-2 sm:mt-0">
+                                            <div className="flex items-center">
+                                                <Filter className="h-4 w-4 mr-2"/>
+                                                <SelectValue placeholder="Filter by status" />
+                                            </div>
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">All Statuses</SelectItem>
@@ -175,6 +156,7 @@ export default function AdminBookingsPage() {
                                         </SelectContent>
                                     </Select>
                                 </div>
+                                <div className="overflow-x-auto">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
@@ -219,16 +201,17 @@ export default function AdminBookingsPage() {
                                         ))}
                                     </TableBody>
                                 </Table>
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
-                    <div className="grid auto-rows-max items-start gap-4 md:gap-8">
+                    <div className="space-y-6">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Calendar View</CardTitle>
                                 <CardDescription>Select a date to filter bookings.</CardDescription>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="flex justify-center">
                                 <Calendar
                                     mode="single"
                                     selected={date}
@@ -239,8 +222,8 @@ export default function AdminBookingsPage() {
                             </CardContent>
                         </Card>
                     </div>
-                </main>
-            </div>
+                </div>
+            </main>
 
             {/* Create/Edit Dialog */}
             <Dialog open={isEditDialogOpen || isCreateDialogOpen} onOpenChange={isCreateDialogOpen ? setCreateDialogOpen : setEditDialogOpen}>
