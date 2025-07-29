@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, X, CheckCircle, RefreshCw } from 'lucide-react';
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { AuthContext } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -31,9 +31,15 @@ export default function MyBookingsPage() {
     const auth = useContext(AuthContext);
     const router = useRouter();
 
-    if (!auth?.user && !auth?.loading) {
-        router.push('/login');
-        return null;
+    useEffect(() => {
+        if (!auth?.loading && !auth?.user) {
+            router.push('/login');
+        }
+    }, [auth?.loading, auth?.user, router]);
+
+
+    if (auth?.loading || !auth?.user) {
+        return null; // Or a loading spinner
     }
 
     const upcomingBookings = mockBookings.filter(b => (b.status === 'Confirmed' || b.status === 'Pending') && new Date(b.date) >= new Date());

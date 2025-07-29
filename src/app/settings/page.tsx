@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { Header } from "@/components/header";
@@ -18,15 +18,24 @@ export default function SettingsPage() {
     const router = useRouter();
     const { toast } = useToast();
 
-    const [name, setName] = useState(auth?.user?.name || '');
-    const [email, setEmail] = useState(auth?.user?.email || '');
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
     const [phone, setPhone] = useState(''); // Assuming phone is not in user object yet
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+
+    useEffect(() => {
+        if (!auth?.loading && !auth?.user) {
+            router.push('/login');
+        } else if (auth?.user) {
+            setName(auth.user.name);
+            setEmail(auth.user.email);
+        }
+    }, [auth?.loading, auth?.user, router]);
+    
     
     if (!auth?.user && !auth?.loading) {
-        router.push('/login');
         return null;
     }
     
@@ -49,6 +58,10 @@ export default function SettingsPage() {
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
+    }
+
+    if (auth?.loading || !auth?.user) {
+        return null; // Or a loading spinner
     }
 
     return (

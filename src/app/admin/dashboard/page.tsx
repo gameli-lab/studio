@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { AuthContext } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { Header } from "@/components/header";
@@ -27,9 +27,15 @@ export default function AdminDashboardPage() {
     const auth = useContext(AuthContext);
     const router = useRouter();
 
-    if (!auth?.loading && auth?.user?.role !== 'admin') {
-        router.push('/');
-        return null;
+    useEffect(() => {
+        if (!auth.loading && auth.user?.role !== 'admin') {
+            router.push('/');
+        }
+    }, [auth.loading, auth.user, router]);
+
+
+    if (auth.loading || auth.user?.role !== 'admin') {
+        return null; // Or a loading spinner
     }
 
     return (
