@@ -1,3 +1,5 @@
+"use client";
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from '@/components/ui/sheet';
@@ -29,7 +31,7 @@ const Logo = () => (
     <line x1="12" y1="2" x2="12" y2="22" />
     <line x1="2" y1="12" x2="22" y2="12" />
     <path d="M7.48 20.48S5.2 16.8 5.2 12s2.28-8.48 2.28-8.48" />
-    <path d="M16.52 3.52S18.8 7.2 18.8 12s-2.28 8.48-2.28 8.48" />
+    <path d="M16.52 3.52S18.8 7.2 18.8 12s-2.28 8.48-2.28-8.48" />
     <path d="M3.52 7.48S7.2 5.2 12 5.2s8.48 2.28 8.48 2.28" />
     <path d="M20.48 16.52S16.8 18.8 12 18.8s-8.48-2.28-8.48-2.28" />
   </svg>
