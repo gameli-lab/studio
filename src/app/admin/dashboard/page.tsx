@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useContext, useEffect, useMemo } from 'react';
@@ -39,22 +40,25 @@ export default function AdminDashboardPage() {
     }, [bookingContext?.bookings]);
     
     const stats = useMemo(() => {
-        if (!bookingContext?.bookings) return {
+        if (!bookingContext?.bookings || !userContext?.users) return {
             totalRevenue: 0,
             totalBookings: 0,
             occupancyRate: 0,
+            registeredUsers: 0
         };
 
         const paidBookings = bookingContext.bookings.filter(b => b.status === 'Paid');
         const totalRevenue = paidBookings.reduce((acc, b) => acc + b.amount, 0);
+        const registeredUsers = userContext.users.filter(u => u.role === 'user').length;
 
         return {
             totalRevenue,
             totalBookings: bookingContext.bookings.length,
             // A simple mock for occupancy
-            occupancyRate: Math.round((bookingContext.bookings.filter(b => b.status !== 'Cancelled').length / (15 * 30)) * 100)
+            occupancyRate: Math.round((bookingContext.bookings.filter(b => b.status !== 'Cancelled').length / (15 * 30)) * 100),
+            registeredUsers
         }
-    }, [bookingContext?.bookings]);
+    }, [bookingContext?.bookings, userContext?.users]);
 
 
     if (auth.loading || auth.user?.role !== 'admin' || !bookingContext || !userContext) {
@@ -92,7 +96,7 @@ export default function AdminDashboardPage() {
                             <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">+{userContext.users.length}</div>
+                            <div className="text-2xl font-bold">+{stats.registeredUsers}</div>
                             <p className="text-xs text-muted-foreground">+19% from last month</p>
                         </CardContent>
                     </Card>
