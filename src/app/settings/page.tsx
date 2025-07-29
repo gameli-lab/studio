@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useRef } from 'react';
 import { AuthContext } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { Header } from "@/components/header";
@@ -26,6 +26,8 @@ export default function SettingsPage() {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
 
     useEffect(() => {
         if (!auth?.loading && !auth?.user) {
@@ -66,15 +68,24 @@ export default function SettingsPage() {
         setConfirmPassword('');
     }
     
-    const handleAvatarChange = () => {
-        // Mock avatar change. In a real app, this would open a file dialog.
-        const newAvatar = `https://placehold.co/100x100.png?text=${name.charAt(0)}${Math.floor(Math.random() * 10)}`;
-        setAvatar(newAvatar);
-        if (auth?.user) {
-            auth.updateUser({ ...auth.user, name, email, avatar: newAvatar });
-            toast({ title: "Avatar Updated", description: "Your new profile picture has been saved."});
+    const handleAvatarChangeClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            // In a real app, you'd upload the file and get a URL.
+            // Here, we'll simulate it by creating a placeholder with a new random character.
+            const newAvatar = `https://placehold.co/100x100.png?text=${name.charAt(0)}${Math.floor(Math.random() * 10)}`;
+            setAvatar(newAvatar);
+             if (auth?.user) {
+                auth.updateUser({ ...auth.user, name, email, avatar: newAvatar });
+                toast({ title: "Avatar Updated", description: "Your new profile picture has been saved."});
+            }
         }
-    }
+    };
+
 
     if (auth?.loading || !auth?.user) {
         return null; // Or a loading spinner
@@ -101,10 +112,17 @@ export default function SettingsPage() {
                                             <AvatarImage src={avatar} alt={name} />
                                             <AvatarFallback>{name.charAt(0)}</AvatarFallback>
                                         </Avatar>
-                                        <Button type="button" size="icon" className="absolute bottom-0 right-0 rounded-full" onClick={handleAvatarChange}>
+                                        <Button type="button" size="icon" className="absolute bottom-0 right-0 rounded-full" onClick={handleAvatarChangeClick}>
                                             <Camera className="h-4 w-4" />
                                             <span className="sr-only">Change Photo</span>
                                         </Button>
+                                        <input 
+                                            type="file" 
+                                            ref={fileInputRef} 
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                            accept="image/*"
+                                        />
                                     </div>
                                     <div className="flex-grow space-y-2">
                                         <Label htmlFor="name">Full Name</Label>
