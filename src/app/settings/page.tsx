@@ -41,7 +41,10 @@ export default function SettingsPage() {
     
     const handleProfileUpdate = (e: React.FormEvent) => {
         e.preventDefault();
-        toast({ title: "Profile Updated", description: "Your profile information has been saved." });
+        if (auth?.user) {
+            auth.updateUser({ ...auth.user, name, email });
+            toast({ title: "Profile Updated", description: "Your profile information has been saved." });
+        }
     }
 
     const handlePasswordChange = (e: React.FormEvent) => {

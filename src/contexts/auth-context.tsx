@@ -14,6 +14,7 @@ interface AuthContextType {
   user: User | null;
   login: (user: User) => void;
   logout: () => void;
+  updateUser: (user: User) => void;
   loading: boolean;
 }
 
@@ -51,7 +52,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/');
   };
 
-  const value = { user, login, logout, loading };
+  const updateUser = (userData: User) => {
+    localStorage.setItem('astrobook-user', JSON.stringify(userData));
+    setUser(userData);
+  };
+
+  const value = { user, login, logout, updateUser, loading };
 
   return (
     <AuthContext.Provider value={value}>
