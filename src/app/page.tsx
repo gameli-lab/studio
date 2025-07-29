@@ -93,7 +93,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <main className="flex-grow">
-        { auth?.user ? <UserDashboard /> : <LandingPage /> }
+        { auth?.user && auth.user.role !== 'admin' ? <UserDashboard /> : <LandingPage /> }
       </main>
       <Footer />
     </div>

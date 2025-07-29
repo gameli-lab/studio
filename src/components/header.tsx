@@ -43,11 +43,18 @@ export function Header() {
   const auth = useContext(AuthContext);
   const { setTheme, theme } = useTheme();
 
-  const navLinks = [
+  const loggedOutNavLinks = [
     { href: "/#about", label: "About" },
     { href: "/#gallery", label: "Gallery" },
     { href: "/#booking", label: "Book Now" },
   ];
+  
+  const loggedInNavLinks = [
+    { href: "/my-bookings", label: "My Bookings" },
+    { href: "/settings", label: "Settings" },
+  ];
+
+  const navLinks = auth?.user ? loggedInNavLinks : loggedOutNavLinks;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
