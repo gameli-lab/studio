@@ -4,6 +4,7 @@ import { Footer } from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookingSection } from "@/components/booking-section";
+import { Testimonials } from "@/components/testimonials";
 import { ShowerHead, Users, Moon, Sun, Shirt, ParkingCircle } from 'lucide-react';
 
 const amenities = [
@@ -66,6 +67,8 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <Testimonials />
 
         <section id="booking" className="py-16 md:py-24">
           <div className="container mx-auto px-4">

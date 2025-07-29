@@ -1,8 +1,17 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
-import React from 'react';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from '@/components/ui/sheet';
+import { Menu, UserCircle } from 'lucide-react';
+import React, { useContext } from 'react';
+import { AuthContext } from '@/contexts/auth-context';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const Logo = () => (
   <svg
@@ -28,6 +37,8 @@ const Logo = () => (
 
 
 export function Header() {
+  const auth = useContext(AuthContext);
+
   const navLinks = [
     { href: "#about", label: "About" },
     { href: "#gallery", label: "Gallery" },
@@ -49,8 +60,34 @@ export function Header() {
           ))}
         </nav>
         <div className="hidden md:flex items-center gap-2">
-          <Button variant="ghost">Sign In</Button>
-          <Button>Sign Up</Button>
+          {auth?.user ? (
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2">
+                  <UserCircle />
+                  {auth.user.name}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {auth.user.role === 'admin' && <DropdownMenuItem>Dashboard</DropdownMenuItem>}
+                <DropdownMenuItem>My Bookings</DropdownMenuItem>
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={auth.logout}>Sign Out</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <Link href="/login">Sign In</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/signup">Sign Up</Link>
+              </Button>
+            </>
+          )}
         </div>
         <Sheet>
           <SheetTrigger asChild>
@@ -68,14 +105,35 @@ export function Header() {
               </Link>
               <nav className="grid gap-4">
                 {navLinks.map((link) => (
-                  <Link key={link.href} href={link.href} className="text-base font-medium text-muted-foreground transition-colors hover:text-primary">
-                    {link.label}
-                  </Link>
+                  <SheetClose key={link.href} asChild>
+                    <Link href={link.href} className="text-base font-medium text-muted-foreground transition-colors hover:text-primary">
+                      {link.label}
+                    </Link>
+                  </SheetClose>
                 ))}
               </nav>
               <div className="flex flex-col gap-2">
-                <Button variant="ghost" className="w-full">Sign In</Button>
-                <Button className="w-full">Sign Up</Button>
+                 {auth?.user ? (
+                   <>
+                    <SheetClose asChild>
+                      <Button variant="outline" className="w-full">Dashboard</Button>
+                    </SheetClose>
+                    <Button onClick={auth.logout} className="w-full">Sign Out</Button>
+                   </>
+                 ) : (
+                  <>
+                    <SheetClose asChild>
+                      <Button variant="ghost" className="w-full" asChild>
+                        <Link href="/login">Sign In</Link>
+                      </Button>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Button className="w-full" asChild>
+                        <Link href="/signup">Sign Up</Link>
+                      </Button>
+                    </SheetClose>
+                  </>
+                 )}
               </div>
             </div>
           </SheetContent>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useContext } from 'react';
+import Link from 'next/link';
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarDays, Clock, Tag, Wallet } from "lucide-react";
+import { CalendarDays, Clock, Tag, Wallet, Lock } from "lucide-react";
+import { AuthContext } from '@/contexts/auth-context';
 
 // Assuming slots from 8 AM to 10 PM (22:00)
 const timeSlots = Array.from({ length: 15 }, (_, i) => {
@@ -24,6 +26,7 @@ export function BookingSection() {
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const auth = useContext(AuthContext);
 
   const priceDetails = useMemo(() => {
     if (!selectedTime) return null;
@@ -70,6 +73,24 @@ export function BookingSection() {
     setEmail('');
     setPhone('');
   };
+
+  if (!auth?.user) {
+    return (
+        <div className="flex flex-col items-center justify-center p-12 text-center bg-muted/30">
+            <Lock className="h-12 w-12 mb-4 text-primary" />
+            <h3 className="text-2xl font-bold mb-2">Sign In to Book</h3>
+            <p className="text-muted-foreground mb-6 max-w-sm">You need to be logged in to your account to book a time slot. It's quick and easy!</p>
+            <div className="flex gap-4">
+                <Button asChild>
+                    <Link href="/login">Sign In</Link>
+                </Button>
+                <Button variant="outline" asChild>
+                    <Link href="/signup">Sign Up</Link>
+                </Button>
+            </div>
+        </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2">
