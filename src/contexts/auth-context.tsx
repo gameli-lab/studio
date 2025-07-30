@@ -55,20 +55,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (userSnap.exists()) {
                 const userData = userSnap.data() as User;
                 setUser(userData);
-                 if (userData.role === 'admin') {
+                 if (userData.role === 'admin' && (router.pathname === '/login' || router.pathname === '/signup' || router.pathname === '/')) {
                     router.push('/admin/dashboard');
                 }
             } else {
-                // This case handles new sign-ups, creating a user doc.
+                // This case handles new sign-ups (e.g. via Google), creating a user doc.
                 const newUser: User = {
                     id: firebaseUser.uid,
                     name: firebaseUser.displayName || 'New User',
                     email: firebaseUser.email || '',
-                    role: 'user', // Default role
+                    role: firebaseUser.email === 'admin@astrobook.com' ? 'admin' : 'user', // Check for admin email
                     avatar: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${(firebaseUser.displayName || 'U').charAt(0)}`
                 };
                 await setDoc(userRef, { ...newUser, createdAt: serverTimestamp() });
                 setUser(newUser);
+                 if (newUser.role === 'admin') {
+                    router.push('/admin/dashboard');
+                }
             }
         } else {
             setFirebaseUser(null);
@@ -100,7 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         id: firebaseUser.uid,
         name: name,
         email: email,
-        role: 'user',
+        role: email === 'admin@astrobook.com' ? 'admin' : 'user',
         avatar: `https://placehold.co/100x100.png?text=${name.charAt(0)}`
     };
     await setDoc(doc(db, 'users', firebaseUser.uid), { ...newUser, createdAt: serverTimestamp() });
