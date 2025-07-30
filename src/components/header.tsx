@@ -131,7 +131,7 @@ export function Header() {
                   )}
                   <DropdownMenuItem asChild><Link href="/settings">Settings</Link></DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={auth.logout}>Sign Out</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => auth.logout()}>Sign Out</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
@@ -189,7 +189,7 @@ export function Header() {
                         </Button>
                       </SheetClose>
                     )}
-                    <Button onClick={auth.logout} className="w-full">Sign Out</Button>
+                    <Button onClick={() => auth.logout()} className="w-full">Sign Out</Button>
                    </>
                  ) : (
                   <>

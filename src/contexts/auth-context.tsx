@@ -3,6 +3,17 @@
 
 import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
 import { useRouter } from 'next/navigation';
+import { auth, db } from '@/lib/firebase';
+import { 
+    onAuthStateChanged, 
+    signOut,
+    User as FirebaseUser,
+    GoogleAuthProvider,
+    signInWithPopup,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword
+} from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { UserContext } from './user-context';
 
 export interface User {
@@ -15,68 +26,102 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (user: User) => void;
+  firebaseUser: FirebaseUser | null;
+  loginWithGoogle: () => Promise<void>;
+  loginWithEmail: (email:string, password:string) => Promise<any>;
+  signupWithEmail: (name: string, email:string, password:string) => Promise<any>;
   logout: () => void;
-  updateUser: (user: User) => void;
+  updateUser: (user: Partial<User>) => void;
   loading: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
+const googleProvider = new GoogleAuthProvider();
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const userContext = useContext(UserContext);
 
   useEffect(() => {
-    // Try to load user from localStorage on initial load
-    try {
-      const storedUser = localStorage.getItem('astrobook-user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+            setFirebaseUser(firebaseUser);
+            const userRef = doc(db, 'users', firebaseUser.uid);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+                const userData = userSnap.data() as User;
+                setUser(userData);
+                 if (userData.role === 'admin') {
+                    router.push('/admin/dashboard');
+                }
+            } else {
+                // This case handles new sign-ups, creating a user doc.
+                const newUser: User = {
+                    id: firebaseUser.uid,
+                    name: firebaseUser.displayName || 'New User',
+                    email: firebaseUser.email || '',
+                    role: 'user', // Default role
+                    avatar: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${(firebaseUser.displayName || 'U').charAt(0)}`
+                };
+                await setDoc(userRef, { ...newUser, createdAt: serverTimestamp() });
+                setUser(newUser);
+            }
+        } else {
+            setFirebaseUser(null);
+            setUser(null);
+        }
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  const loginWithGoogle = async () => {
+      try {
+        await signInWithPopup(auth, googleProvider);
+        // onAuthStateChanged will handle the rest
+      } catch (error) {
+        console.error("Google sign-in error", error);
       }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-      localStorage.removeItem('astrobook-user');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const login = (userData: User) => {
-    const userWithAvatar = {
-        ...userData,
-        avatar: userData.avatar || `https://placehold.co/100x100.png?text=${userData.name.charAt(0)}`
-    }
-    localStorage.setItem('astrobook-user', JSON.stringify(userWithAvatar));
-    setUser(userWithAvatar);
-    if (userContext) {
-      userContext.addUser(userWithAvatar);
-    }
-
-    if (userWithAvatar.role === 'admin') {
-        router.push('/admin/dashboard');
-    } else {
-        router.push('/');
-    }
   };
+  
+  const loginWithEmail = async (email: string, password: string) => {
+    return signInWithEmailAndPassword(auth, email, password);
+  }
+  
+  const signupWithEmail = async (name: string, email: string, password: string) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
+    const newUser: User = {
+        id: firebaseUser.uid,
+        name: name,
+        email: email,
+        role: 'user',
+        avatar: `https://placehold.co/100x100.png?text=${name.charAt(0)}`
+    };
+    await setDoc(doc(db, 'users', firebaseUser.uid), { ...newUser, createdAt: serverTimestamp() });
+    setUser(newUser);
+    return userCredential;
+  }
 
-  const logout = () => {
-    localStorage.removeItem('astrobook-user');
-    setUser(null);
+  const logout = async () => {
+    await signOut(auth);
     router.push('/');
   };
 
-  const updateUser = (userData: User) => {
-    localStorage.setItem('astrobook-user', JSON.stringify(userData));
-    setUser(userData);
-     if (userContext) {
-      userContext.updateUser(userData);
+  const updateUser = async (userData: Partial<User>) => {
+    if (user) {
+        const userRef = doc(db, 'users', user.id);
+        await setDoc(userRef, userData, { merge: true });
+        setUser(prevUser => prevUser ? { ...prevUser, ...userData } : null);
     }
   };
 
-  const value = { user, login, logout, updateUser, loading };
+  const value = { user, firebaseUser, loginWithGoogle, loginWithEmail, signupWithEmail, logout, updateUser, loading };
 
   return (
     <AuthContext.Provider value={value}>

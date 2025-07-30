@@ -2,6 +2,8 @@
 "use client";
 
 import React, { createContext, useState, ReactNode, useEffect } from 'react';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 
 export interface User {
   id: string;
@@ -9,69 +11,64 @@ export interface User {
   email: string;
   role: 'user' | 'admin';
   avatar?: string;
+  createdAt?: any;
 }
 
 interface UserContextType {
   users: User[];
-  addUser: (user: User) => void;
-  updateUser: (user: User) => void;
-  deleteUser: (userId: string) => void;
+  addUser: (user: User) => Promise<void>;
+  updateUser: (userId: string, updates: Partial<User>) => Promise<void>;
+  deleteUser: (userId: string) => Promise<void>;
 }
 
 export const UserContext = createContext<UserContextType | null>(null);
 
+const usersCollection = collection(db, 'users');
 
-const initialUsers: User[] = [
-    { id: 'admin01', name: 'Admin User', email: 'admin@astrobook.com', role: 'admin', avatar: 'https://placehold.co/100x100.png?text=A' },
-    { id: 'user01', name: 'Normal User', email: 'user@astrobook.com', role: 'user', avatar: 'https://placehold.co/100x100.png?text=N' },
-];
+const initialAdmin: User = { 
+    id: 'admin01', 
+    name: 'Admin User', 
+    email: 'admin@astrobook.com', 
+    role: 'admin', 
+    avatar: 'https://placehold.co/100x100.png?text=A' 
+};
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    try {
-      const storedUsers = localStorage.getItem('astrobook-users');
-      if (storedUsers) {
-        setUsers(JSON.parse(storedUsers));
-      } else {
-        // If no users in storage, initialize with default
-        setUsers(initialUsers);
-        localStorage.setItem('astrobook-users', JSON.stringify(initialUsers));
+    const q = query(usersCollection, orderBy('name'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const usersData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
+      
+      // Ensure the initial admin user exists in Firestore
+      const adminExists = usersData.some(u => u.email === initialAdmin.email);
+      if (!adminExists) {
+        // In a real app, this would be a secure setup script.
+        // For this demo, we ensure the admin user is always there.
+        // This is not a secure way to manage admins.
+        const adminRef = doc(db, 'users', initialAdmin.id);
+        setDoc(adminRef, initialAdmin, { merge: true });
       }
-    } catch (error) {
-      console.error("Failed to parse users from localStorage", error);
-      // Fallback to initial users if storage is corrupt
-      setUsers(initialUsers);
-      localStorage.setItem('astrobook-users', JSON.stringify(initialUsers));
-    }
+
+      setUsers(usersData);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const persistUsers = (updatedUsers: User[]) => {
-    localStorage.setItem('astrobook-users', JSON.stringify(updatedUsers));
-    setUsers(updatedUsers);
+  const addUser = async (newUser: User) => {
+    const userRef = doc(db, 'users', newUser.id);
+    await setDoc(userRef, newUser, { merge: true });
   };
 
-  const addUser = (newUser: User) => {
-    setUsers(prevUsers => {
-      // Avoid adding duplicate users on login
-      if (prevUsers.some(u => u.id === newUser.id)) {
-        return prevUsers;
-      }
-      const updatedUsers = [...prevUsers, newUser];
-      persistUsers(updatedUsers);
-      return updatedUsers;
-    });
+  const updateUser = async (userId: string, updates: Partial<User>) => {
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, updates, { merge: true });
   };
 
-  const updateUser = (updatedUser: User) => {
-    const updatedUsers = users.map(u => (u.id === updatedUser.id ? updatedUser : u));
-    persistUsers(updatedUsers);
-  };
-
-  const deleteUser = (userId: string) => {
-    const updatedUsers = users.filter(u => u.id !== userId);
-    persistUsers(updatedUsers);
+  const deleteUser = async (userId: string) => {
+    const userRef = doc(db, 'users', userId);
+    await deleteDoc(userRef);
   };
 
   const value = { users, addUser, updateUser, deleteUser };

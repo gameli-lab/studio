@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useContext, useState, useEffect, useRef } from 'react';
@@ -13,6 +14,10 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from '@/hooks/use-toast';
 import { User, Mail, Phone, KeyRound, Camera } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { app } from '@/lib/firebase';
+
+const storage = getStorage(app);
 
 export default function SettingsPage() {
     const auth = useContext(AuthContext);
@@ -44,44 +49,36 @@ export default function SettingsPage() {
         return null;
     }
     
-    const handleProfileUpdate = (e: React.FormEvent) => {
+    const handleProfileUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (auth?.user) {
-            auth.updateUser({ ...auth.user, name, email, avatar });
+            await auth.updateUser({ name, email });
             toast({ title: "Profile Updated", description: "Your profile information has been saved." });
         }
     }
 
     const handlePasswordChange = (e: React.FormEvent) => {
         e.preventDefault();
-        if (newPassword !== confirmPassword) {
-            toast({ variant: 'destructive', title: "Passwords don't match", description: "Please ensure the new passwords match." });
-            return;
-        }
-        if (!newPassword || newPassword.length < 6) {
-             toast({ variant: 'destructive', title: "Invalid Password", description: "Password must be at least 6 characters." });
-            return;
-        }
-        toast({ title: "Password Changed", description: "Your password has been successfully updated." });
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
+        toast({ variant: 'destructive', title: "Feature not available", description: "Password changes are not enabled in this demo." });
     }
     
     const handleAvatarChangeClick = () => {
         fileInputRef.current?.click();
     };
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (file) {
-            // In a real app, you'd upload the file and get a URL.
-            // Here, we'll simulate it by creating a placeholder with a new random character.
-            const newAvatar = `https://placehold.co/100x100.png?text=${name.charAt(0)}${Math.floor(Math.random() * 10)}`;
-            setAvatar(newAvatar);
-             if (auth?.user) {
-                auth.updateUser({ ...auth.user, name, email, avatar: newAvatar });
+        if (file && auth?.user) {
+            const storageRef = ref(storage, `avatars/${auth.user.id}/${file.name}`);
+            try {
+                const snapshot = await uploadBytes(storageRef, file);
+                const downloadURL = await getDownloadURL(snapshot.ref);
+                setAvatar(downloadURL);
+                await auth.updateUser({ avatar: downloadURL });
                 toast({ title: "Avatar Updated", description: "Your new profile picture has been saved."});
+            } catch (error) {
+                console.error("Avatar upload error:", error);
+                toast({ variant: 'destructive', title: "Upload Failed", description: "Could not upload your new avatar." });
             }
         }
     };
@@ -131,11 +128,11 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="email">Email Address</Label>
-                                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                                    <Input id="email" type="email" value={email} readOnly disabled />
                                 </div>
                                  <div className="space-y-2">
                                     <Label htmlFor="phone">Phone Number</Label>
-                                    <Input id="phone" type="tel" placeholder="e.g. 024 123 4567" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                                    <Input id="phone" type="tel" placeholder="e.g. 024 123 4567" value={phone} onChange={(e) => setPhone(e.target.value)} disabled />
                                 </div>
                                 <Button type="submit">Save Changes</Button>
                             </form>
@@ -154,19 +151,19 @@ export default function SettingsPage() {
                              <form onSubmit={handlePasswordChange} className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="current-password">Current Password</Label>
-                                    <Input id="current-password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                                    <Input id="current-password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} disabled />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="new-password">New Password</Label>
-                                        <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                                        <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} disabled />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="confirm-password">Confirm New Password</Label>
-                                        <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                                        <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled />
                                     </div>
                                 </div>
-                                <Button type="submit">Update Password</Button>
+                                <Button type="submit" disabled>Update Password</Button>
                             </form>
                         </CardContent>
                     </Card>

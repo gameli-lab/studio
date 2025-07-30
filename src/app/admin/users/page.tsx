@@ -55,29 +55,28 @@ export default function AdminUsersPage() {
         setDeleteDialogOpen(true);
     };
 
-    const confirmDeletion = () => {
+    const confirmDeletion = async () => {
         if (selectedUser) {
-            userContext?.deleteUser(selectedUser.id);
+            await userContext?.deleteUser(selectedUser.id);
             toast({ title: "User Deleted", description: `User ${selectedUser.name} has been removed.` });
         }
         setDeleteDialogOpen(false);
         setSelectedUser(null);
     };
 
-    const handleSaveUser = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSaveUser = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!selectedUser) return;
 
         const formData = new FormData(e.currentTarget);
-        const updatedUser: User = {
-            ...selectedUser,
+        const updatedUser = {
             name: formData.get('name') as string,
             email: formData.get('email') as string,
             role: formData.get('role') as User['role'],
         };
         
-        userContext?.updateUser(updatedUser);
-        toast({ title: "User Saved", description: `Details for ${updatedUser.name} have been updated.`});
+        await userContext?.updateUser(selectedUser.id, updatedUser);
+        toast({ title: "User Saved", description: `Details for ${selectedUser.name} have been updated.`});
         setEditDialogOpen(false);
     };
 
@@ -139,7 +138,7 @@ export default function AdminUsersPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            {new Date().toLocaleDateString()}
+                                            {user.createdAt?.toDate().toLocaleDateString() || 'N/A'}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <DropdownMenu>
@@ -222,4 +221,3 @@ export default function AdminUsersPage() {
         </div>
     );
 }
-

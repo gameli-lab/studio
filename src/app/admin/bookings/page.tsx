@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect, useContext } from 'react';
@@ -59,45 +60,46 @@ export default function AdminBookingsPage() {
         setCancelDialogOpen(true);
     };
 
-    const confirmCancellation = () => {
+    const confirmCancellation = async () => {
         if (selectedBooking) {
-            bookingContext?.cancelBooking(selectedBooking.id);
+            await bookingContext?.cancelBooking(selectedBooking.id);
             toast({ title: "Booking Cancelled", description: `Booking #${selectedBooking.id} has been cancelled.` });
         }
         setCancelDialogOpen(false);
         setSelectedBooking(null);
     };
 
-     const handleSaveBooking = (e: React.FormEvent<HTMLFormElement>) => {
+     const handleSaveBooking = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!selectedBooking) return;
 
         const formData = new FormData(e.currentTarget);
-        const updatedBooking: Booking = {
-            ...selectedBooking,
+        const updatedData = {
             name: formData.get('name') as string,
             date: formData.get('date') as string,
             time: formData.get('time') as string,
             status: formData.get('status') as Booking['status'],
         };
         
-        bookingContext?.updateBooking(updatedBooking);
-        toast({ title: "Booking Saved", description: `Booking details for ${updatedBooking.name} have been updated.`});
+        await bookingContext?.updateBooking(selectedBooking.id, updatedData);
+        toast({ title: "Booking Saved", description: `Booking details for ${updatedData.name} have been updated.`});
         setEditDialogOpen(false);
     };
     
-    const handleCreateBooking = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleCreateBooking = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const newBookingData = {
+            userId: 'admin_walkin',
             name: formData.get('name') as string,
+            email: 'walkin@astrobook.com',
             date: formData.get('date') as string,
             time: formData.get('time') as string,
             duration: parseInt(formData.get('duration') as string || '1'),
             status: formData.get('status') as Booking['status'],
         };
-
-        bookingContext?.addBooking(newBookingData);
+        
+        await bookingContext?.addBooking(newBookingData);
         toast({ title: "Booking Created", description: `A new booking for ${newBookingData.name} has been created.`});
         setCreateDialogOpen(false);
     };

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Header } from "@/components/header";
@@ -45,7 +46,7 @@ export default function MyBookingsPage() {
     
     const userBookings = useMemo(() => {
         if (!auth?.user || !bookingContext?.bookings) return [];
-        return bookingContext.bookings.filter(b => b.email === auth.user?.email || b.name === auth.user?.name);
+        return bookingContext.bookings.filter(b => b.userId === auth.user?.id);
     }, [auth?.user, bookingContext?.bookings]);
 
     const upcomingBookings = userBookings.filter(b => (b.status === 'Confirmed' || b.status === 'Pending' || b.status === 'Paid') && new Date(b.date) >= new Date());
@@ -54,6 +55,12 @@ export default function MyBookingsPage() {
     if (auth?.loading || !auth?.user || !bookingContext) {
         return null; // Or a loading spinner
     }
+    
+    const handleCancel = async (bookingId: string) => {
+        if (bookingContext) {
+            await bookingContext.cancelBooking(bookingId);
+        }
+    }
 
     const BookingCard = ({ booking }: { booking: Booking }) => (
         <Card>
@@ -61,7 +68,7 @@ export default function MyBookingsPage() {
                 <div className="flex-grow">
                     <div className="flex items-center gap-4 mb-2">
                         <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
-                        <p className="text-sm text-muted-foreground">ID: #{booking.id}</p>
+                        <p className="text-sm text-muted-foreground">ID: #{booking.id.substring(0, 6)}</p>
                     </div>
                     <div className="flex items-center gap-2 font-semibold">
                          <Calendar className="h-4 w-4" />
@@ -75,11 +82,11 @@ export default function MyBookingsPage() {
                 <div className="flex gap-2 self-end sm:self-center">
                     {(booking.status === 'Confirmed' || booking.status === 'Pending' || booking.status === 'Paid') && (
                         <>
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" disabled>
                                 <RefreshCw className="mr-2 h-4 w-4"/>
                                 Reschedule
                             </Button>
-                            <Button variant="destructive" size="sm" onClick={() => bookingContext.cancelBooking(booking.id)}>
+                            <Button variant="destructive" size="sm" onClick={() => handleCancel(booking.id)}>
                                 <X className="mr-2 h-4 w-4"/>
                                 Cancel
                             </Button>

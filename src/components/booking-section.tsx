@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CalendarDays, Clock, Tag, Wallet, Lock, Hourglass } from "lucide-react";
 import { AuthContext } from '@/contexts/auth-context';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { BookingContext, Booking } from '@/contexts/booking-context';
+import { BookingContext } from '@/contexts/booking-context';
 
 // Assuming slots from 8 AM to 10 PM (22:00)
 const timeSlots = Array.from({ length: 15 }, (_, i) => {
@@ -61,7 +61,7 @@ export function BookingSection() {
   
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!date || !selectedTime || !name || !email) {
+    if (!date || !selectedTime || !name || !email || !auth?.user) {
       toast({
         variant: "destructive",
         title: "Missing Information",
@@ -72,29 +72,36 @@ export function BookingSection() {
     
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    bookingContext?.addBooking({
-      name,
-      email,
-      phone,
-      date: date.toISOString().split('T')[0], // YYYY-MM-DD
-      time: selectedTime,
-      duration,
-    });
+    try {
+      await bookingContext?.addBooking({
+        userId: auth.user.id,
+        name,
+        email,
+        phone,
+        date: date.toISOString().split('T')[0], // YYYY-MM-DD
+        time: selectedTime,
+        duration,
+      });
 
-    setIsSubmitting(false);
+      toast({
+        title: "Booking Request Sent!",
+        description: `We've received your request for ${date.toLocaleDateString()} at ${selectedTime}. We'll contact you shortly.`,
+      });
+      
+      // Reset form
+      setSelectedTime(null);
+      setPhone('');
+      setDuration(1);
 
-    toast({
-      title: "Booking Request Sent!",
-      description: `We've received your request for ${date.toLocaleDateString()} at ${selectedTime}. We'll contact you shortly.`,
-    });
-    
-    // Reset form
-    setSelectedTime(null);
-    setPhone('');
-    setDuration(1);
+    } catch (error) {
+       toast({
+        variant: "destructive",
+        title: "Booking Failed",
+        description: "Could not create your booking. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isSlotBooked = (slot: string) => {
