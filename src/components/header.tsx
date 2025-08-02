@@ -156,6 +156,7 @@ export function Header() {
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="p-0">
+             <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
              <div className="flex items-center justify-between p-4 border-b">
                 <Link href="/" className="flex items-center gap-2 font-bold">
                     <Logo />
