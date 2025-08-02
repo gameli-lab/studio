@@ -54,6 +54,9 @@ export default function AdminGalleryPage() {
         setAltText('');
         setIsUploading(false);
         setUploadProgress(0);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
     }
 
     const handleUpload = async () => {
@@ -61,46 +64,52 @@ export default function AdminGalleryPage() {
             toast({ variant: 'destructive', title: "No file selected", description: "Please select an image to upload." });
             return;
         }
-
+    
         setIsUploading(true);
         setUploadProgress(0);
         const storageRef = ref(storage, `gallery/${Date.now()}_${fileToUpload.name}`);
         const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
-
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploadProgress(progress);
-            },
-            (error) => {
-                console.error("Image upload error:", error);
-                toast({ variant: 'destructive', title: "Upload Failed", description: "Could not upload the image." });
-                resetUploadDialog();
-            },
-            async () => {
-                try {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    await galleryContext?.addImage({
-                        src: downloadURL,
-                        alt: altText || "Gallery image",
-                        hint: "user uploaded",
-                        storagePath: uploadTask.snapshot.ref.fullPath,
-                    });
-
-                    toast({ title: "Image Uploaded", description: "The new image has been added to the gallery." });
-                    
-                    // Keep dialog open for a moment to show "Uploaded"
-                    setTimeout(() => {
-                       resetUploadDialog();
-                    }, 1500);
-
-                } catch(error) {
-                    console.error("Error getting download URL or adding image:", error);
-                    toast({ variant: 'destructive', title: "Upload Failed", description: "Could not save the uploaded image." });
+    
+        // Use a promise to handle the upload completion
+        await new Promise<void>((resolve, reject) => {
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    setUploadProgress(progress);
+                },
+                (error) => {
+                    console.error("Image upload error:", error);
+                    toast({ variant: 'destructive', title: "Upload Failed", description: "Could not upload the image." });
                     resetUploadDialog();
+                    reject(error);
+                },
+                async () => {
+                    try {
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        await galleryContext?.addImage({
+                            src: downloadURL,
+                            alt: altText || "Gallery image",
+                            hint: "user uploaded",
+                            storagePath: uploadTask.snapshot.ref.fullPath,
+                        });
+    
+                        setUploadProgress(100); // Ensure it hits 100%
+                        toast({ title: "Image Uploaded", description: "The new image has been added to the gallery." });
+                        
+                        setTimeout(() => {
+                           resetUploadDialog();
+                        }, 1500);
+
+                        resolve();
+                    } catch (error) {
+                        console.error("Error getting download URL or adding image:", error);
+                        toast({ variant: 'destructive', title: "Upload Failed", description: "Could not save the uploaded image." });
+                        resetUploadDialog();
+                        reject(error);
+                    }
                 }
-            }
-        );
+            );
+        });
     };
     
     const handleDeleteClick = (image: GalleryImage) => {
@@ -248,3 +257,5 @@ export default function AdminGalleryPage() {
 
     
 }
+
+    
