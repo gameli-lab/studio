@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { 
     onAuthStateChanged, 
@@ -44,6 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
   const userContext = useContext(UserContext);
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (userSnap.exists()) {
                 const userData = userSnap.data() as User;
                 setUser(userData);
-                 if (userData.role === 'admin' && (router.pathname === '/login' || router.pathname === '/signup' || router.pathname === '/')) {
+                 if (userData.role === 'admin') {
                     router.push('/admin/dashboard');
                 }
             } else {
