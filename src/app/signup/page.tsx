@@ -57,7 +57,7 @@ export default function SignupPage() {
     return (
         <div className="relative flex flex-col min-h-screen bg-background">
              <Image
-                src="https://storage.googleapis.com/stedi-assets/astro-turf-1.jpg"
+                src="../login/astro-turf.jpg"
                 alt="Astro turf background"
                 fill
                 quality={100}
