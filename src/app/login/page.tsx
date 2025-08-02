@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import astroTurfImage from './astro-turf.jpg';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="24px" height="24px">
@@ -47,7 +48,7 @@ export default function LoginPage() {
     return (
         <div className="relative flex flex-col min-h-screen bg-background">
             <Image
-                src="https://storage.googleapis.com/stedi-assets/astro-turf-1.jpg"
+                src={astroTurfImage}
                 alt="Astro turf background"
                 fill
                 quality={100}
