@@ -59,7 +59,7 @@ export default function SignupPage() {
              <Image
                 src="https://storage.googleapis.com/stedi-assets/astro-turf-1.jpg"
                 alt="Astro turf background"
-                layout="fill"
+                fill
                 objectFit="cover"
                 className="absolute inset-0 z-0 opacity-40"
             />
