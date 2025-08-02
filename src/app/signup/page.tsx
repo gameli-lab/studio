@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
-import astroTurfImage from '../login/astro-turf.jpg';
+import astroTurfImage from '../images/astro-turf.jpg';
 
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
