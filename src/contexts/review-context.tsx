@@ -3,7 +3,7 @@
 
 import React, { createContext, useState, ReactNode, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, where, limit } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, where, limit, getDocs } from 'firebase/firestore';
 
 export type Review = {
   id?: string;
@@ -54,12 +54,18 @@ export const ReviewProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const getReviewsForLanding = async () => {
-      const q = query(reviewsCollection, where('rating', '>=', 4), orderBy('rating', 'desc'), orderBy('createdAt', 'desc'), limit(2));
-      const snapshot = await onSnapshot(q, (snapshot) => {
-        const reviewsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Review));
-        setReviews(reviewsData)
-      });
-      return reviews;
+    // Fetch all reviews and filter/sort in code to avoid composite index requirement.
+    // This is acceptable for a reasonable number of reviews.
+    const q = query(reviewsCollection, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    const allReviews = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Review));
+    
+    const filteredAndSortedReviews = allReviews
+      .filter(r => r.rating >= 4)
+      .sort((a, b) => b.rating - a.rating) // Sort by rating descending first
+      .slice(0, 2); // Then take the top 2
+
+    return filteredAndSortedReviews;
   }
 
   const value = { reviews, addReview, getReviewsForLanding, hasUserReviewedBooking };
