@@ -61,6 +61,7 @@ export function Header() {
       { href: "/admin/dashboard", label: "Dashboard" },
       { href: "/admin/bookings", label: "Bookings" },
       { href: "/admin/users", label: "Users" },
+      { href: "/admin/gallery", label: "Gallery" },
   ];
 
   const getNavLinks = () => {
@@ -125,6 +126,7 @@ export function Header() {
                       <DropdownMenuItem asChild><Link href="/admin/dashboard">Dashboard</Link></DropdownMenuItem>
                       <DropdownMenuItem asChild><Link href="/admin/bookings">Bookings</Link></DropdownMenuItem>
                        <DropdownMenuItem asChild><Link href="/admin/users">Users</Link></DropdownMenuItem>
+                       <DropdownMenuItem asChild><Link href="/admin/gallery">Gallery</Link></DropdownMenuItem>
                     </>
                   ) : (
                     <DropdownMenuItem asChild><Link href="/my-bookings">My Bookings</Link></DropdownMenuItem>

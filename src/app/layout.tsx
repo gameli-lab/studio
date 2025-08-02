@@ -6,6 +6,7 @@ import { AuthProvider } from '@/contexts/auth-context';
 import { BookingProvider } from '@/contexts/booking-context';
 import { UserProvider } from '@/contexts/user-context';
 import { ThemeProvider } from '@/components/theme-provider';
+import { GalleryProvider } from '@/contexts/gallery-context';
 
 export const metadata: Metadata = {
   title: 'AstroBook',
@@ -34,7 +35,9 @@ export default function RootLayout({
           <AuthProvider>
             <UserProvider>
               <BookingProvider>
-                {children}
+                <GalleryProvider>
+                  {children}
+                </GalleryProvider>
               </BookingProvider>
               <Toaster />
             </UserProvider>
