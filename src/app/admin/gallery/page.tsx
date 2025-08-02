@@ -98,9 +98,9 @@ export default function AdminGalleryPage() {
                         
                         setTimeout(() => {
                            resetUploadDialog();
+                           resolve();
                         }, 1500);
 
-                        resolve();
                     } catch (error) {
                         console.error("Error getting download URL or adding image:", error);
                         toast({ variant: 'destructive', title: "Upload Failed", description: "Could not save the uploaded image." });
@@ -196,7 +196,7 @@ export default function AdminGalleryPage() {
             </main>
 
             {/* Upload Dialog */}
-            <Dialog open={isUploadDialogOpen} onOpenChange={(isOpen) => { if (!isUploading) setUploadDialogOpen(isOpen) }}>
+            <Dialog open={isUploadDialogOpen} onOpenChange={(isOpen) => { if (!isUploading) resetUploadDialog() }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Upload a New Image</DialogTitle>
@@ -216,23 +216,28 @@ export default function AdminGalleryPage() {
                                 <Image src={URL.createObjectURL(fileToUpload)} alt="Preview" width={200} height={150} className="rounded-md object-cover"/>
                             </div>
                         )}
+                         {isUploading && (
+                            <div className="w-full flex items-center gap-4">
+                                <Progress value={uploadProgress} className="w-full" />
+                                <span className="text-sm min-w-fit">{Math.round(uploadProgress)}%</span>
+                            </div>
+                        )}
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={resetUploadDialog} disabled={isUploading}>Cancel</Button>
-                        <div className="w-56">
-                            {!isUploading ? (
-                                <Button onClick={handleUpload} disabled={!fileToUpload}>
-                                    Upload
-                                </Button>
-                            ) : uploadProgress < 100 ? (
-                                <div className="w-full flex items-center gap-2">
-                                     <Progress value={uploadProgress} className="w-full" />
-                                     <span className="text-sm">{Math.round(uploadProgress)}%</span>
-                                </div>
-                            ) : (
-                                <Button className="w-full bg-green-600 hover:bg-green-700" disabled>Uploaded</Button>
-                            )}
-                        </div>
+                        {!isUploading ? (
+                            <Button onClick={handleUpload} disabled={!fileToUpload}>
+                                Upload
+                            </Button>
+                        ) : uploadProgress < 100 ? (
+                           <Button disabled>
+                                Uploading...
+                           </Button>
+                        ) : (
+                            <Button className="bg-green-600 hover:bg-green-700" disabled>
+                                Uploaded
+                            </Button>
+                        )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -254,8 +259,5 @@ export default function AdminGalleryPage() {
             </Dialog>
         </div>
     );
-
-    
-}
 
     
