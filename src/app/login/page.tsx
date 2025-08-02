@@ -47,11 +47,12 @@ export default function LoginPage() {
     return (
         <div className="relative flex flex-col min-h-screen bg-background">
             <Image
-                src="astro-turf.jpg"
+                src="https://storage.googleapis.com/stedi-assets/astro-turf-1.jpg"
                 alt="Astro turf background"
                 fill
                 quality={100}
                 className="absolute inset-0 z-0 object-cover"
+                data-ai-hint="astro turf"
             />
              <div className="absolute inset-0 bg-black/50 z-0" />
              <div className="relative z-10 flex flex-col flex-grow">
