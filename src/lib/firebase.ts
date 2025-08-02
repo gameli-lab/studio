@@ -6,7 +6,7 @@ import { getFirestore } from "firebase/firestore";
 // Your web app's Firebase configuration
 const firebaseConfig = {
   projectId: "astrobook-hf09d",
-  appId: "1:977553383092:web:61b1962081930d2e9a41e1",
+  appId: "1:977553383092:web:b0ec28feb116c7d69a41e1",
   storageBucket: "astrobook-hf09d.firebasestorage.app",
   apiKey: "AIzaSyBwLbCW-ATjOqRVZsxW_JSy1ct_Ppow_oU",
   authDomain: "astrobook-hf09d.firebaseapp.com",
