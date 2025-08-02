@@ -63,6 +63,7 @@ export default function AdminGalleryPage() {
         }
 
         setIsUploading(true);
+        setUploadProgress(0);
         const storageRef = ref(storage, `gallery/${Date.now()}_${fileToUpload.name}`);
         const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
 
@@ -209,7 +210,7 @@ export default function AdminGalleryPage() {
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={resetUploadDialog} disabled={isUploading}>Cancel</Button>
-                        <div className="w-28">
+                        <div className="w-56">
                             {!isUploading ? (
                                 <Button onClick={handleUpload} disabled={!fileToUpload}>
                                     Upload
@@ -220,7 +221,7 @@ export default function AdminGalleryPage() {
                                      <span className="text-sm">{Math.round(uploadProgress)}%</span>
                                 </div>
                             ) : (
-                                <Button className="w-full bg-green-600" disabled>Uploaded</Button>
+                                <Button className="w-full bg-green-600 hover:bg-green-700" disabled>Uploaded</Button>
                             )}
                         </div>
                     </DialogFooter>
@@ -246,3 +247,4 @@ export default function AdminGalleryPage() {
     );
 
     
+}
