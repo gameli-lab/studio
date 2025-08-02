@@ -60,13 +60,14 @@ export default function SignupPage() {
                 src="https://storage.googleapis.com/stedi-assets/astro-turf-1.jpg"
                 alt="Astro turf background"
                 fill
-                objectFit="cover"
-                className="absolute inset-0 z-0 opacity-40"
+                quality={100}
+                className="absolute inset-0 z-0 object-cover"
             />
+            <div className="absolute inset-0 bg-black/50 z-0" />
             <div className="relative z-10 flex flex-col flex-grow">
                 <Header />
                 <main className="flex-grow flex items-center justify-center py-12 px-4">
-                    <Card className="mx-auto max-w-sm w-full bg-background/80 backdrop-blur-sm">
+                    <Card className="mx-auto max-w-sm w-full bg-background/80 backdrop-blur-sm border-white/20">
                         <CardHeader>
                             <CardTitle className="text-xl">Sign Up</CardTitle>
                             <CardDescription>
