@@ -1,7 +1,9 @@
+
 "use client";
 
 import { useContext, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -53,70 +55,79 @@ export default function SignupPage() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-background">
-            <Header />
-            <main className="flex-grow flex items-center justify-center py-12 px-4">
-                <Card className="mx-auto max-w-sm w-full">
-                    <CardHeader>
-                        <CardTitle className="text-xl">Sign Up</CardTitle>
-                        <CardDescription>
-                            Enter your information to create an account
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleSignup}>
-                            <div className="grid gap-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="full-name">Full name</Label>
-                                    <Input 
-                                        id="full-name" 
-                                        placeholder="John Doe" 
-                                        required 
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                    />
+        <div className="relative flex flex-col min-h-screen bg-background">
+             <Image
+                src="https://storage.googleapis.com/stedi-assets/astro-turf-1.jpg"
+                alt="Astro turf background"
+                layout="fill"
+                objectFit="cover"
+                className="absolute inset-0 z-0 opacity-40"
+            />
+            <div className="relative z-10 flex flex-col flex-grow">
+                <Header />
+                <main className="flex-grow flex items-center justify-center py-12 px-4">
+                    <Card className="mx-auto max-w-sm w-full bg-background/80 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="text-xl">Sign Up</CardTitle>
+                            <CardDescription>
+                                Enter your information to create an account
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handleSignup}>
+                                <div className="grid gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="full-name">Full name</Label>
+                                        <Input 
+                                            id="full-name" 
+                                            placeholder="John Doe" 
+                                            required 
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="email">Email</Label>
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            placeholder="m@example.com"
+                                            required
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="password">Password</Label>
+                                        <Input 
+                                            id="password" 
+                                            type="password" 
+                                            required
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                        />
+                                    </div>
+                                    <Button type="submit" className="w-full">
+                                        Create an account
+                                    </Button>
                                 </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="email">Email</Label>
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        placeholder="m@example.com"
-                                        required
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="password">Password</Label>
-                                    <Input 
-                                        id="password" 
-                                        type="password" 
-                                        required
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                    />
-                                </div>
-                                <Button type="submit" className="w-full">
-                                    Create an account
-                                </Button>
+                            </form>
+                            <Separator className="my-4" />
+                            <Button variant="outline" className="w-full" onClick={() => auth?.loginWithGoogle()}>
+                                <GoogleIcon className="mr-2" />
+                                Sign up with Google
+                            </Button>
+                            <div className="mt-4 text-center text-sm">
+                                Already have an account?{' '}
+                                <Link href="/login" className="underline">
+                                    Sign in
+                                </Link>
                             </div>
-                        </form>
-                        <Separator className="my-4" />
-                        <Button variant="outline" className="w-full" onClick={() => auth?.loginWithGoogle()}>
-                            <GoogleIcon className="mr-2" />
-                            Sign up with Google
-                        </Button>
-                        <div className="mt-4 text-center text-sm">
-                            Already have an account?{' '}
-                            <Link href="/login" className="underline">
-                                Sign in
-                            </Link>
-                        </div>
-                    </CardContent>
-                </Card>
-            </main>
-            <Footer />
+                        </CardContent>
+                    </Card>
+                </main>
+                <Footer />
+            </div>
         </div>
     );
 }

@@ -1,7 +1,9 @@
+
 "use client";
 
 import { useContext, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -43,65 +45,74 @@ export default function LoginPage() {
     };
     
     return (
-        <div className="flex flex-col min-h-screen bg-background">
-            <Header />
-            <main className="flex-grow flex items-center justify-center py-12 px-4">
-                <Card className="mx-auto max-w-sm w-full">
-                    <CardHeader>
-                        <CardTitle className="text-2xl">Login</CardTitle>
-                        <CardDescription>
-                            Enter your email below to login to your account.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleLogin}>
-                            <div className="grid gap-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="email">Email</Label>
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        placeholder="m@example.com"
-                                        required
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <div className="flex items-center">
-                                        <Label htmlFor="password">Password</Label>
-                                        <Link href="#" className="ml-auto inline-block text-sm underline">
-                                            Forgot your password?
-                                        </Link>
+        <div className="relative flex flex-col min-h-screen bg-background">
+            <Image
+                src="https://storage.googleapis.com/stedi-assets/astro-turf-1.jpg"
+                alt="Astro turf background"
+                layout="fill"
+                objectFit="cover"
+                className="absolute inset-0 z-0 opacity-40"
+            />
+             <div className="relative z-10 flex flex-col flex-grow">
+                <Header />
+                <main className="flex-grow flex items-center justify-center py-12 px-4">
+                    <Card className="mx-auto max-w-sm w-full bg-background/80 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="text-2xl">Login</CardTitle>
+                            <CardDescription>
+                                Enter your email below to login to your account.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handleLogin}>
+                                <div className="grid gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="email">Email</Label>
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            placeholder="m@example.com"
+                                            required
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                        />
                                     </div>
-                                    <Input 
-                                        id="password" 
-                                        type="password" 
-                                        required 
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                    />
+                                    <div className="grid gap-2">
+                                        <div className="flex items-center">
+                                            <Label htmlFor="password">Password</Label>
+                                            <Link href="#" className="ml-auto inline-block text-sm underline">
+                                                Forgot your password?
+                                            </Link>
+                                        </div>
+                                        <Input 
+                                            id="password" 
+                                            type="password" 
+                                            required 
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                        />
+                                    </div>
+                                    <Button type="submit" className="w-full">
+                                        Login
+                                    </Button>
                                 </div>
-                                <Button type="submit" className="w-full">
-                                    Login
-                                </Button>
+                            </form>
+                            <Separator className="my-4" />
+                            <Button variant="outline" className="w-full" onClick={() => auth?.loginWithGoogle()}>
+                                <GoogleIcon className="mr-2" />
+                                Continue with Google
+                            </Button>
+                            <div className="mt-4 text-center text-sm">
+                                Don&apos;t have an account?{' '}
+                                <Link href="/signup" className="underline">
+                                    Sign up
+                                </Link>
                             </div>
-                        </form>
-                        <Separator className="my-4" />
-                        <Button variant="outline" className="w-full" onClick={() => auth?.loginWithGoogle()}>
-                            <GoogleIcon className="mr-2" />
-                            Continue with Google
-                        </Button>
-                        <div className="mt-4 text-center text-sm">
-                            Don&apos;t have an account?{' '}
-                            <Link href="/signup" className="underline">
-                                Sign up
-                            </Link>
-                        </div>
-                    </CardContent>
-                </Card>
-            </main>
-            <Footer />
+                        </CardContent>
+                    </Card>
+                </main>
+                <Footer />
+            </div>
         </div>
     );
 }
