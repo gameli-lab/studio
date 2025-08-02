@@ -14,8 +14,9 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Upload, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 import { app } from '@/lib/firebase';
+import { Progress } from '@/components/ui/progress';
 
 const storage = getStorage(app);
 
@@ -31,6 +32,7 @@ export default function AdminGalleryPage() {
     const [fileToUpload, setFileToUpload] = useState<File | null>(null);
     const [altText, setAltText] = useState('');
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -45,6 +47,14 @@ export default function AdminGalleryPage() {
             setFileToUpload(file);
         }
     };
+    
+    const resetUploadDialog = () => {
+        setUploadDialogOpen(false);
+        setFileToUpload(null);
+        setAltText('');
+        setIsUploading(false);
+        setUploadProgress(0);
+    }
 
     const handleUpload = async () => {
         if (!fileToUpload || !auth?.user) {
@@ -54,28 +64,42 @@ export default function AdminGalleryPage() {
 
         setIsUploading(true);
         const storageRef = ref(storage, `gallery/${Date.now()}_${fileToUpload.name}`);
-        
-        try {
-            const snapshot = await uploadBytes(storageRef, fileToUpload);
-            const downloadURL = await getDownloadURL(snapshot.ref);
+        const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
 
-            await galleryContext?.addImage({
-                src: downloadURL,
-                alt: altText || "Gallery image",
-                hint: "user uploaded",
-                storagePath: snapshot.ref.fullPath,
-            });
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                setUploadProgress(progress);
+            },
+            (error) => {
+                console.error("Image upload error:", error);
+                toast({ variant: 'destructive', title: "Upload Failed", description: "Could not upload the image." });
+                resetUploadDialog();
+            },
+            async () => {
+                try {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    await galleryContext?.addImage({
+                        src: downloadURL,
+                        alt: altText || "Gallery image",
+                        hint: "user uploaded",
+                        storagePath: uploadTask.snapshot.ref.fullPath,
+                    });
 
-            toast({ title: "Image Uploaded", description: "The new image has been added to the gallery." });
-            setUploadDialogOpen(false);
-            setFileToUpload(null);
-            setAltText('');
-        } catch (error) {
-            console.error("Image upload error:", error);
-            toast({ variant: 'destructive', title: "Upload Failed", description: "Could not upload the image." });
-        } finally {
-            setIsUploading(false);
-        }
+                    toast({ title: "Image Uploaded", description: "The new image has been added to the gallery." });
+                    
+                    // Keep dialog open for a moment to show "Uploaded"
+                    setTimeout(() => {
+                       resetUploadDialog();
+                    }, 1500);
+
+                } catch(error) {
+                    console.error("Error getting download URL or adding image:", error);
+                    toast({ variant: 'destructive', title: "Upload Failed", description: "Could not save the uploaded image." });
+                    resetUploadDialog();
+                }
+            }
+        );
     };
     
     const handleDeleteClick = (image: GalleryImage) => {
@@ -162,7 +186,7 @@ export default function AdminGalleryPage() {
             </main>
 
             {/* Upload Dialog */}
-            <Dialog open={isUploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+            <Dialog open={isUploadDialogOpen} onOpenChange={(isOpen) => { if (!isUploading) setUploadDialogOpen(isOpen) }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Upload a New Image</DialogTitle>
@@ -171,11 +195,11 @@ export default function AdminGalleryPage() {
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="image-file" className="text-right">Image</Label>
-                            <Input id="image-file" type="file" accept="image/*" onChange={handleFileChange} className="col-span-3" ref={fileInputRef} />
+                            <Input id="image-file" type="file" accept="image/*" onChange={handleFileChange} className="col-span-3" ref={fileInputRef} disabled={isUploading}/>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="alt-text" className="text-right">Alt Text</Label>
-                            <Input id="alt-text" value={altText} onChange={(e) => setAltText(e.target.value)} placeholder="e.g., Players enjoying a match" className="col-span-3" />
+                            <Input id="alt-text" value={altText} onChange={(e) => setAltText(e.target.value)} placeholder="e.g., Players enjoying a match" className="col-span-3" disabled={isUploading}/>
                         </div>
                         {fileToUpload && (
                             <div className="col-span-4 flex justify-center">
@@ -184,10 +208,21 @@ export default function AdminGalleryPage() {
                         )}
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>Cancel</Button>
-                        <Button onClick={handleUpload} disabled={isUploading || !fileToUpload}>
-                            {isUploading ? "Uploading..." : "Upload"}
-                        </Button>
+                        <Button variant="outline" onClick={resetUploadDialog} disabled={isUploading}>Cancel</Button>
+                        <div className="w-28">
+                            {!isUploading ? (
+                                <Button onClick={handleUpload} disabled={!fileToUpload}>
+                                    Upload
+                                </Button>
+                            ) : uploadProgress < 100 ? (
+                                <div className="w-full flex items-center gap-2">
+                                     <Progress value={uploadProgress} className="w-full" />
+                                     <span className="text-sm">{Math.round(uploadProgress)}%</span>
+                                </div>
+                            ) : (
+                                <Button className="w-full bg-green-600" disabled>Uploaded</Button>
+                            )}
+                        </div>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -209,4 +244,5 @@ export default function AdminGalleryPage() {
             </Dialog>
         </div>
     );
-}
+
+    
