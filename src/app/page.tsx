@@ -37,15 +37,18 @@ function LandingPage() {
   }, [bookingContext?.bookings]);
 
   const galleryImages = useMemo(() => {
-    if (!galleryContext?.images) return [
-      { id: '1', src: "https://storage.googleapis.com/stedi-assets/astro-turf-1.jpg", alt: "Astro turf view from the side", hint: "astro turf" },
-      { id: '2', src: "https://placehold.co/600x400.png", alt: "Astro turf view from the goal post", hint: "football field" },
-      { id: '3', src: "https://placehold.co/600x400.png", alt: "Players on the astro turf", hint: "soccer players" },
-      { id: '4', src: "https://placehold.co/600x400.png", alt: "Astro turf under floodlights at night", hint: "stadium lights" },
-    ];
-    // Add the user provided image as the first image if it's not already there
-    const userImage = { id: 'user-provided', src: "https://storage.googleapis.com/stedi-assets/astro-turf-1.jpg", alt: "Astro turf with palm trees", hint: "astro turf" };
-    const allImages = [userImage, ...galleryContext.images.filter(img => img.src !== userImage.src)];
+    const defaultImage = { id: 'default-1', src: "https://storage.googleapis.com/stedi-assets/astro-turf-1.jpg", alt: "Astro turf view from the side", hint: "astro turf" };
+    if (!galleryContext?.images || galleryContext.images.length === 0) {
+        return [
+            defaultImage,
+            { id: '2', src: "https://placehold.co/600x400.png", alt: "Astro turf view from the goal post", hint: "football field" },
+            { id: '3', src: "https://placehold.co/600x400.png", alt: "Players on the astro turf", hint: "soccer players" },
+            { id: '4', src: "https://placehold.co/600x400.png", alt: "Astro turf under floodlights at night", hint: "stadium lights" },
+        ];
+    }
+    // If there are user uploaded images, use them. Prepend the default image if it's not there.
+    const hasDefaultImage = galleryContext.images.some(img => img.src === defaultImage.src);
+    const allImages = hasDefaultImage ? [...galleryContext.images] : [defaultImage, ...galleryContext.images];
     return allImages;
   }, [galleryContext?.images]);
 
@@ -112,7 +115,7 @@ function LandingPage() {
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-headline font-bold text-center mb-12">Gallery</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {galleryImages.map((image, index) => (
+            {galleryImages.slice(0, 4).map((image, index) => (
               <div key={image.id || index} className="overflow-hidden rounded-lg shadow-lg group">
                 <Image
                   src={image.src}

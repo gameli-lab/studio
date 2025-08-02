@@ -125,32 +125,38 @@ export default function AdminGalleryPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {galleryContext.images.map(image => (
-                                <Card key={image.id} className="group relative overflow-hidden">
-                                    <Image
-                                        src={image.src}
-                                        alt={image.alt}
-                                        width={400}
-                                        height={300}
-                                        className="object-cover w-full h-48"
-                                    />
-                                    <div className="absolute top-2 right-2">
-                                        <Button
-                                            variant="destructive"
-                                            size="icon"
-                                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            onClick={() => handleDeleteClick(image)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                    <div className="p-2 text-xs text-muted-foreground truncate" title={image.alt}>
-                                        {image.alt}
-                                    </div>
-                                </Card>
-                            ))}
-                        </div>
+                        {galleryContext.images.length > 0 ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {galleryContext.images.map(image => (
+                                    <Card key={image.id} className="group relative overflow-hidden">
+                                        <Image
+                                            src={image.src}
+                                            alt={image.alt}
+                                            width={400}
+                                            height={300}
+                                            className="object-cover w-full h-48"
+                                        />
+                                        <div className="absolute top-2 right-2">
+                                            <Button
+                                                variant="destructive"
+                                                size="icon"
+                                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={() => handleDeleteClick(image)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <div className="p-2 text-xs text-muted-foreground truncate" title={image.alt}>
+                                            {image.alt}
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12 text-muted-foreground">
+                                <p>No images have been uploaded to the gallery yet.</p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </main>
