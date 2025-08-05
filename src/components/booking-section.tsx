@@ -12,7 +12,6 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarDays, Clock, Tag, Wallet, Lock, Hourglass, FileImage, Type } from "lucide-react";
 import { AuthContext } from '@/contexts/auth-context';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BookingContext } from '@/contexts/booking-context';
 import { Textarea } from './ui/textarea';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
@@ -259,16 +258,17 @@ export function BookingSection() {
          <Separator className="my-6" />
          <div>
             <h3 className="text-xl font-semibold mb-4 font-headline flex items-center gap-2"><Hourglass className="h-5 w-5"/> 2. Select Duration</h3>
-            <RadioGroup defaultValue="1" onValueChange={(value) => setDuration(parseInt(value))} value={duration.toString()} className="flex gap-4">
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="1" id="1hr" />
-                    <Label htmlFor="1hr" className="text-base">1 Hour</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="2" id="2hr" />
-                    <Label htmlFor="2hr" className="text-base">2 Hours</Label>
-                </div>
-            </RadioGroup>
+            <div className="flex items-center gap-2">
+                 <Input 
+                    id="duration"
+                    type="number"
+                    value={duration}
+                    onChange={(e) => setDuration(Math.max(1, parseInt(e.target.value) || 1))}
+                    min="1"
+                    className="w-24"
+                />
+                <Label htmlFor="duration" className="text-base">Hour(s)</Label>
+            </div>
         </div>
       </div>
       <div className="p-6 md:p-8 bg-muted/30 border-l">
