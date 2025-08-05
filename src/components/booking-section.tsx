@@ -49,9 +49,10 @@ export function BookingSection() {
     const baseRate = 100;
     let afterHoursFee = 0;
     const hour = parseInt(selectedTime.split(':')[0], 10);
+    const endTime = hour + duration;
 
-    // After 6 PM (18:00) or before 6 AM (not applicable with current slots but good practice)
-    if (hour >= 18 || hour < 6) {
+    // After 6 PM (18:00) or if the booking duration extends into the night
+    if (hour >= 18 || endTime > 18 || hour < 6) {
       afterHoursFee = 50;
     }
 
@@ -217,7 +218,7 @@ export function BookingSection() {
                   </div>
                   {priceDetails?.afterHoursFee && priceDetails.afterHoursFee > 0 && (
                     <div className="flex justify-between text-muted-foreground">
-                      <span>After-Hours Fee</span>
+                      <span>Floodlight Fee</span>
                       <span className="font-medium">GHS {priceDetails.afterHoursFee.toFixed(2)}</span>
                     </div>
                   )}

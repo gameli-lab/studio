@@ -48,9 +48,10 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     const baseRate = 100;
     let afterHoursFee = 0;
     const hour = parseInt(time.split(':')[0], 10);
+    const endTime = hour + duration;
     
-    // After 6 PM (18:00) or before 6 AM
-    if (hour >= 18 || hour < 6) {
+    // After 6 PM (18:00) or if the booking duration extends into the night
+    if (hour >= 18 || endTime > 18 || hour < 6) {
       afterHoursFee = 50;
     }
     
