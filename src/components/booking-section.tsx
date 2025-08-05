@@ -340,7 +340,7 @@ export function BookingSection() {
                     {isSubmitting ? 'Processing...' : (
                       <>
                         <Wallet className="mr-2 h-5 w-5"/>
-                        Pay with Paystack
+                        Pay with MoMo
                       </>
                     )}
                   </Button>
