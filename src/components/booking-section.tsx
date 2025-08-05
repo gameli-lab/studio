@@ -18,6 +18,7 @@ import { Textarea } from './ui/textarea';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { app } from '@/lib/firebase';
 import Image from 'next/image';
+import { usePaystackPayment } from 'react-paystack';
 
 const storage = getStorage(app);
 
@@ -76,9 +77,17 @@ export function BookingSection() {
       setFlyerFile(file);
     }
   };
+  
+  const resetForm = () => {
+      setSelectedTime(null);
+      setPhone('');
+      setDuration(1);
+      setDescription('');
+      setFlyerFile(null);
+      if(fileInputRef.current) fileInputRef.current.value = "";
+  }
 
-  const handleBooking = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleBooking = async () => {
     if (!date || !selectedTime || !name || !email || !auth?.user) {
       toast({
         variant: "destructive",
@@ -133,14 +142,7 @@ export function BookingSection() {
         description: `We've received your request for ${date.toLocaleDateString()} at ${selectedTime}. We'll contact you shortly.`,
       });
       
-      // Reset form
-      setSelectedTime(null);
-      setPhone('');
-      setDuration(1);
-      setDescription('');
-      setFlyerFile(null);
-      if(fileInputRef.current) fileInputRef.current.value = "";
-
+      resetForm();
 
     } catch (error) {
        toast({
@@ -152,6 +154,40 @@ export function BookingSection() {
       setIsSubmitting(false);
     }
   };
+  
+    const paystackConfig = {
+        reference: new Date().getTime().toString(),
+        email: email,
+        amount: (priceDetails?.total || 0) * 100, // Amount in kobo
+        publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
+    };
+    
+    const initializePayment = usePaystackPayment(paystackConfig);
+
+    const onPaymentSuccess = () => {
+        handleBooking();
+    };
+
+    const onPaymentClose = () => {
+        toast({
+            variant: "default",
+            title: "Payment window closed",
+            description: "You can continue with your payment anytime.",
+        });
+    };
+    
+    const handlePaystackSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
+            toast({
+                variant: "destructive",
+                title: "Payment Gateway Not Configured",
+                description: "The admin has not set up the payment gateway yet.",
+            });
+            return;
+        }
+        initializePayment({ onSuccess: onPaymentSuccess, onClose: onPaymentClose });
+    }
 
   const isSlotBooked = (slot: string) => {
     if (!date || !bookingContext?.bookings) return false;
@@ -276,7 +312,7 @@ export function BookingSection() {
                   </div>
                 </div>
                 <Separator />
-                <form onSubmit={handleBooking} className="space-y-4 pt-2">
+                <form onSubmit={handlePaystackSubmit} className="space-y-4 pt-2">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
                     <Input id="name" placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} required />
