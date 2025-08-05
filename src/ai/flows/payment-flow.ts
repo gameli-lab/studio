@@ -19,8 +19,11 @@ export type InitializeTransactionInput = z.infer<typeof InitializeTransactionInp
 const InitializeTransactionOutputSchema = z.object({
   status: z.boolean(),
   message: z.string(),
-  access_code: z.string().optional(),
-  reference: z.string().optional(),
+  data: z.object({
+    authorization_url: z.string(),
+    access_code: z.string(),
+    reference: z.string(),
+  }).optional(),
 });
 export type InitializeTransactionOutput = z.infer<typeof InitializeTransactionOutputSchema>;
 
@@ -52,16 +55,10 @@ export async function initializeTransaction(input: InitializeTransactionInput): 
       throw new Error(result.message || 'Failed to initialize Paystack transaction.');
     }
 
-    return {
-      status: true,
-      message: result.message,
-      access_code: result.data.access_code,
-      reference: result.data.reference,
-    };
+    return result as InitializeTransactionOutput;
+    
   } catch (error: any) {
     console.error('Paystack initialization error:', error);
     throw new Error(error.message || 'An unexpected error occurred during payment initialization.');
   }
 }
-
-    

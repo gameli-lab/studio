@@ -8,6 +8,7 @@ import { UserProvider } from '@/contexts/user-context';
 import { ThemeProvider } from '@/components/theme-provider';
 import { GalleryProvider } from '@/contexts/gallery-context';
 import { ReviewProvider } from '@/contexts/review-context';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'AstroBook',
@@ -46,6 +47,7 @@ export default function RootLayout({
             </UserProvider>
           </AuthProvider>
         </ThemeProvider>
+        <Script src="https://js.paystack.co/v2/inline.js" />
       </body>
     </html>
   );

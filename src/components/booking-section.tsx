@@ -18,7 +18,6 @@ import { Textarea } from './ui/textarea';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { app } from '@/lib/firebase';
 import Image from 'next/image';
-import { usePaystackPayment } from 'react-paystack';
 import { initializeTransaction } from '@/ai/flows/payment-flow';
 
 const storage = getStorage(app);
@@ -40,7 +39,6 @@ export function BookingSection() {
   const [description, setDescription] = useState('');
   const [flyerFile, setFlyerFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [bookingData, setBookingData] = useState<any>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -87,36 +85,7 @@ export function BookingSection() {
       setDescription('');
       setFlyerFile(null);
       if(fileInputRef.current) fileInputRef.current.value = "";
-      setBookingData(null);
   }
-
-  const onPaymentSuccess = async () => {
-     if (bookingData) {
-        await bookingContext?.addBooking(bookingData);
-         toast({
-            title: "Booking Confirmed!",
-            description: `Your payment was successful and your booking is confirmed.`,
-        });
-        resetForm();
-     }
-  };
-
-  const onPaymentClose = () => {
-      toast({
-          variant: "default",
-          title: "Payment window closed",
-          description: "You can continue with your payment anytime.",
-      });
-  };
-  
-  const paystackConfig = {
-      reference: new Date().getTime().toString(),
-      email: email,
-      amount: (priceDetails?.total || 0) * 100, // Amount in kobo
-      publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
-  };
-    
-  const initializePayment = usePaystackPayment(paystackConfig);
 
   const handlePaystackSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -133,59 +102,74 @@ export function BookingSection() {
       setIsSubmitting(true);
 
       try {
-        const transaction = await initializeTransaction({
+        const transactionResult = await initializeTransaction({
             email,
             amount: priceDetails.total,
         });
 
-        if (!transaction || !transaction.access_code) {
-            throw new Error("Failed to initialize transaction");
+        if (!transactionResult.status || !transactionResult.data) {
+             throw new Error(transactionResult.message || "Failed to initialize payment.");
         }
-        
-        // Store booking details to be used after successful payment
-        let flyerUrl: string | undefined = undefined;
-        let flyerStoragePath: string | undefined = undefined;
 
-        if (flyerFile) {
-            const storageRef = ref(storage, `flyers/${Date.now()}_${flyerFile.name}`);
-            const uploadTask = uploadBytesResumable(storageRef, flyerFile);
-            
-             await new Promise<void>((resolve, reject) => {
-                uploadTask.on('state_changed',
-                    () => {},
-                    (error) => {
-                        console.error("Flyer upload error:", error);
-                        reject(new Error("Could not upload flyer."));
-                    },
-                    async () => {
-                        flyerUrl = await getDownloadURL(uploadTask.snapshot.ref);
-                        flyerStoragePath = uploadTask.snapshot.ref.fullPath;
-                        resolve();
-                    }
-                );
+        const onPaymentSuccess = async () => {
+            let flyerUrl: string | undefined = undefined;
+            let flyerStoragePath: string | undefined = undefined;
+        
+            if (flyerFile) {
+                const storageRef = ref(storage, `flyers/${Date.now()}_${flyerFile.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, flyerFile);
+                
+                 await new Promise<void>((resolve, reject) => {
+                    uploadTask.on('state_changed',
+                        () => {},
+                        (error) => {
+                            console.error("Flyer upload error:", error);
+                            reject(new Error("Could not upload flyer. Booking saved without it."));
+                        },
+                        async () => {
+                            flyerUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                            flyerStoragePath = uploadTask.snapshot.ref.fullPath;
+                            resolve();
+                        }
+                    );
+                });
+            }
+
+            await bookingContext?.addBooking({
+                userId: auth.user!.id,
+                name,
+                email,
+                phone,
+                date: date.toISOString().split('T')[0],
+                time: selectedTime,
+                duration,
+                description,
+                flyerUrl,
+                flyerStoragePath
             });
-        }
-        
-        setBookingData({
-            userId: auth.user.id,
-            name,
-            email,
-            phone,
-            date: date.toISOString().split('T')[0],
-            time: selectedTime,
-            duration,
-            description,
-            flyerUrl,
-            flyerStoragePath
-        });
 
-        // This replaces the direct call to `initializePayment`
+             toast({
+                title: "Booking Confirmed!",
+                description: `Your payment was successful and your booking is confirmed.`,
+            });
+            resetForm();
+        };
+
+        const onPaymentClose = () => {
+            toast({
+                variant: "default",
+                title: "Payment window closed",
+                description: "You can resume your booking anytime.",
+            });
+        };
+
         const paystackPopup = new (window as any).PaystackPop();
         paystackPopup.newTransaction({
-            ...paystackConfig,
-            key: paystackConfig.publicKey,
-            access_code: transaction.access_code,
-            onSuccess: onPaymentSuccess,
+            key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
+            email: email,
+            amount: priceDetails.total * 100, // Amount in kobo
+            access_code: transactionResult.data.access_code,
+            onSuccess: () => onPaymentSuccess(),
             onCancel: onPaymentClose,
         });
 
@@ -374,5 +358,3 @@ export function BookingSection() {
     </div>
   );
 }
-
-    
