@@ -48,10 +48,13 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     const baseRate = 100;
     let afterHoursFee = 0;
     const hour = parseInt(time.split(':')[0], 10);
-    if (hour >= 18) {
+    
+    // After 6 PM (18:00) or before 6 AM
+    if (hour >= 18 || hour < 6) {
       afterHoursFee = 50;
     }
-    return (baseRate * duration) + (afterHoursFee * duration);
+    
+    return (baseRate * duration) + afterHoursFee;
   };
 
   const addBooking = async (newBooking: NewBooking) => {
