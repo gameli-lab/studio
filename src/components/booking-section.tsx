@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarDays, Clock, Tag, Wallet, Lock, Hourglass, FileImage, Type } from "lucide-react";
+import { CalendarDays, Clock, Tag, Wallet, Lock, Hourglass, FileImage, Type, ArrowLeft, ArrowRight } from "lucide-react";
 import { AuthContext } from '@/contexts/auth-context';
 import { BookingContext } from '@/contexts/booking-context';
 import { Textarea } from './ui/textarea';
@@ -18,6 +18,8 @@ import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/
 import { app } from '@/lib/firebase';
 import Image from 'next/image';
 import { initializeTransaction } from '@/ai/flows/payment-flow';
+import useEmblaCarousel from 'embla-carousel-react'
+
 
 const storage = getStorage(app);
 
@@ -38,6 +40,8 @@ export function BookingSection() {
   const [description, setDescription] = useState('');
   const [flyerFile, setFlyerFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, align: 'start' });
+
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -209,6 +213,32 @@ export function BookingSection() {
     const [hour] = slot.split(':').map(Number);
     return now.getHours() >= hour;
   };
+  
+  const TimeSlotPicker = () => {
+    return (
+        <div className="relative">
+            <h4 className="font-semibold mb-4 text-center md:text-left">{date ? date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'Select a date'}</h4>
+            <div className="overflow-hidden" ref={emblaRef}>
+                <div className="flex -ml-2">
+                    {timeSlots.map(slot => (
+                        <div key={slot} className="pl-2 flex-[0_0_33.33%] sm:flex-[0_0_25%] md:flex-[0_0_20%] lg:flex-[0_0_25%]">
+                            <Button
+                                variant={selectedTime === slot ? "default" : "outline"}
+                                onClick={() => setSelectedTime(slot)}
+                                disabled={isSlotBooked(slot) || isSlotInPast(slot)}
+                                className="w-full"
+                            >
+                                {slot}
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <Button variant="ghost" size="icon" className="absolute -left-4 top-1/2 -translate-y-1/2" onClick={() => emblaApi?.scrollPrev()}><ArrowLeft/></Button>
+            <Button variant="ghost" size="icon" className="absolute -right-4 top-1/2 -translate-y-1/2" onClick={() => emblaApi?.scrollNext()}><ArrowRight/></Button>
+        </div>
+    );
+  }
 
   if (!auth?.user) {
     return (
@@ -244,20 +274,7 @@ export function BookingSection() {
             className="rounded-md border self-start"
           />
           <div className="flex-1">
-            <h4 className="font-semibold mb-4 text-center md:text-left">{date ? date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'Select a date'}</h4>
-            <div className="grid grid-cols-3 gap-2 max-h-96 overflow-y-auto pr-2">
-              {timeSlots.map(slot => (
-                <Button
-                  key={slot}
-                  variant={selectedTime === slot ? "default" : "outline"}
-                  onClick={() => setSelectedTime(slot)}
-                  disabled={isSlotBooked(slot) || isSlotInPast(slot)}
-                  className="w-full"
-                >
-                  {slot}
-                </Button>
-              ))}
-            </div>
+             <TimeSlotPicker />
           </div>
         </div>
          <Separator className="my-6" />
@@ -363,3 +380,5 @@ export function BookingSection() {
     </div>
   );
 }
+
+    
