@@ -29,6 +29,69 @@ const timeSlots = Array.from({ length: 15 }, (_, i) => {
   return `${hour.toString().padStart(2, '0')}:00`;
 });
 
+const isSlotBooked = (slot: string, date: Date | undefined, bookings: any[] | undefined) => {
+    if (!date || !bookings) return false;
+    
+    const selectedDateString = date.toISOString().split('T')[0];
+
+    return bookings.some(booking => 
+        booking.date === selectedDateString &&
+        booking.time === slot &&
+        booking.status !== 'Cancelled'
+    );
+  };
+
+const isSlotInPast = (slot: string, date: Date | undefined) => {
+    if (!date) return false;
+    const now = new Date();
+    
+    const selectedDateStart = new Date(date);
+    selectedDateStart.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selectedDateStart < today) return true;
+    
+    if (selectedDateStart.getTime() !== today.getTime()) return false;
+
+    const [hour] = slot.split(':').map(Number);
+    return now.getHours() >= hour;
+};
+
+const TimeSlotPicker = ({ date, selectedTime, setSelectedTime, bookings }: { date: Date | undefined, selectedTime: string | null, setSelectedTime: (time: string | null) => void, bookings: any[] | undefined }) => {
+    const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, align: 'start' });
+
+    useEffect(() => {
+        if (emblaApi) {
+            emblaApi.reInit();
+        }
+    }, [date, emblaApi]);
+    
+    return (
+        <div className="relative">
+            <h4 className="font-semibold mb-4 text-center md:text-left">{date ? date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'Select a date'}</h4>
+            <div className="overflow-hidden" ref={emblaRef}>
+                <div className="flex -ml-2">
+                    {timeSlots.map(slot => (
+                        <div key={slot} className="pl-2 flex-[0_0_33.33%] sm:flex-[0_0_25%] md:flex-[0_0_20%] lg:flex-[0_0_25%]">
+                            <Button
+                                variant={selectedTime === slot ? "default" : "outline"}
+                                onClick={() => setSelectedTime(slot)}
+                                disabled={isSlotBooked(slot, date, bookings) || isSlotInPast(slot, date)}
+                                className="w-full"
+                            >
+                                {slot}
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <Button variant="ghost" size="icon" className="absolute -left-4 top-1/2 -translate-y-1/2" onClick={() => emblaApi?.scrollPrev()}><ArrowLeft/></Button>
+            <Button variant="ghost" size="icon" className="absolute -right-4 top-1/2 -translate-y-1/2" onClick={() => emblaApi?.scrollNext()}><ArrowRight/></Button>
+        </div>
+    );
+}
 
 export function BookingSection() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -40,8 +103,6 @@ export function BookingSection() {
   const [description, setDescription] = useState('');
   const [flyerFile, setFlyerFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, align: 'start' });
-
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -187,59 +248,6 @@ export function BookingSection() {
       }
   }
 
-
-  const isSlotBooked = (slot: string) => {
-    if (!date || !bookingContext?.bookings) return false;
-    
-    const selectedDateString = date.toISOString().split('T')[0];
-
-    return bookingContext.bookings.some(booking => 
-        booking.date === selectedDateString &&
-        booking.time === slot &&
-        booking.status !== 'Cancelled'
-    );
-  };
-
-  const isSlotInPast = (slot: string) => {
-    if (!date) return false;
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    
-    if (selectedDate < today) return true;
-    if (selectedDate > today) return false;
-
-    // If it's today, check the time
-    const [hour] = slot.split(':').map(Number);
-    return now.getHours() >= hour;
-  };
-  
-  const TimeSlotPicker = () => {
-    return (
-        <div className="relative">
-            <h4 className="font-semibold mb-4 text-center md:text-left">{date ? date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'Select a date'}</h4>
-            <div className="overflow-hidden" ref={emblaRef}>
-                <div className="flex -ml-2">
-                    {timeSlots.map(slot => (
-                        <div key={slot} className="pl-2 flex-[0_0_33.33%] sm:flex-[0_0_25%] md:flex-[0_0_20%] lg:flex-[0_0_25%]">
-                            <Button
-                                variant={selectedTime === slot ? "default" : "outline"}
-                                onClick={() => setSelectedTime(slot)}
-                                disabled={isSlotBooked(slot) || isSlotInPast(slot)}
-                                className="w-full"
-                            >
-                                {slot}
-                            </Button>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <Button variant="ghost" size="icon" className="absolute -left-4 top-1/2 -translate-y-1/2" onClick={() => emblaApi?.scrollPrev()}><ArrowLeft/></Button>
-            <Button variant="ghost" size="icon" className="absolute -right-4 top-1/2 -translate-y-1/2" onClick={() => emblaApi?.scrollNext()}><ArrowRight/></Button>
-        </div>
-    );
-  }
-
   if (!auth?.user) {
     return (
         <div className="flex flex-col items-center justify-center p-12 text-center bg-muted/30">
@@ -274,7 +282,12 @@ export function BookingSection() {
             className="rounded-md border self-start"
           />
           <div className="flex-1">
-             <TimeSlotPicker />
+             <TimeSlotPicker 
+                date={date}
+                selectedTime={selectedTime}
+                setSelectedTime={setSelectedTime}
+                bookings={bookingContext?.bookings}
+             />
           </div>
         </div>
          <Separator className="my-6" />
@@ -380,5 +393,3 @@ export function BookingSection() {
     </div>
   );
 }
-
-    
