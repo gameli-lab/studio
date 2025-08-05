@@ -53,12 +53,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setFirebaseUser(firebaseUser);
             const userRef = doc(db, 'users', firebaseUser.uid);
             const userSnap = await getDoc(userRef);
+            
+            let userData: User | null = null;
+
             if (userSnap.exists()) {
-                const userData = userSnap.data() as User;
+                userData = userSnap.data() as User;
                 setUser(userData);
-                 if (userData.role === 'admin') {
-                    router.push('/admin/dashboard');
-                }
             } else {
                 // This case handles new sign-ups (e.g. via Google), creating a user doc.
                 const newUser: User = {
@@ -69,11 +69,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     avatar: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${(firebaseUser.displayName || 'U').charAt(0)}`
                 };
                 await setDoc(userRef, { ...newUser, createdAt: serverTimestamp() });
+                userData = newUser;
                 setUser(newUser);
-                 if (newUser.role === 'admin') {
-                    router.push('/admin/dashboard');
+            }
+
+            // Redirect based on role after user data is processed
+            if (userData) {
+                 if (userData.role === 'admin') {
+                    // Only redirect if not already in an admin page to avoid loops
+                    if (!pathname.startsWith('/admin')) {
+                        router.push('/admin/dashboard');
+                    }
+                } else {
+                    // Redirect non-admin users to the homepage (which shows their dashboard)
+                    // if they are on login/signup pages
+                    if (pathname === '/login' || pathname === '/signup') {
+                        router.push('/');
+                    }
                 }
             }
+
         } else {
             setFirebaseUser(null);
             setUser(null);
@@ -82,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, [router, pathname]);
 
   const loginWithGoogle = async () => {
       try {
