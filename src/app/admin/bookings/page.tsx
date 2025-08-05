@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect, useContext } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AuthContext } from '@/contexts/auth-context';
 import { BookingContext, Booking } from '@/contexts/booking-context';
 import { useRouter } from 'next/navigation';
@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { PlusCircle, MoreHorizontal, Search, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function AdminBookingsPage() {
     const auth = useContext(AuthContext);
@@ -79,6 +80,7 @@ export default function AdminBookingsPage() {
             date: formData.get('date') as string,
             time: formData.get('time') as string,
             status: formData.get('status') as Booking['status'],
+            description: formData.get('description') as string,
         };
         
         await bookingContext?.updateBooking(selectedBooking.id, updatedData);
@@ -97,6 +99,7 @@ export default function AdminBookingsPage() {
             time: formData.get('time') as string,
             duration: parseInt(formData.get('duration') as string || '1'),
             status: formData.get('status') as Booking['status'],
+            description: formData.get('description') as string,
         };
         
         await bookingContext?.addBooking(newBookingData);
@@ -256,6 +259,10 @@ export default function AdminBookingsPage() {
                                     <Input id="duration" name="duration" type="number" defaultValue="1" className="col-span-3" />
                                 </div>
                             )}
+                             <div className="grid grid-cols-4 items-start gap-4">
+                                <Label htmlFor="description" className="text-right pt-2">Description</Label>
+                                <Textarea id="description" name="description" defaultValue={selectedBooking?.description} className="col-span-3" />
+                            </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="status" className="text-right">Status</Label>
                                  <Select name="status" defaultValue={selectedBooking?.status}>

@@ -17,6 +17,9 @@ export type Booking = {
   amount: number;
   userId: string;
   createdAt: any;
+  description?: string;
+  flyerUrl?: string;
+  flyerStoragePath?: string;
 };
 
 type NewBooking = Omit<Booking, 'id' | 'amount' | 'status' | 'createdAt'>;

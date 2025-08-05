@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useContext, useEffect } from 'react';
+import { useState, useMemo, useContext, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarDays, Clock, Tag, Wallet, Lock, Hourglass } from "lucide-react";
+import { CalendarDays, Clock, Tag, Wallet, Lock, Hourglass, FileImage, Type } from "lucide-react";
 import { AuthContext } from '@/contexts/auth-context';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BookingContext } from '@/contexts/booking-context';
+import { Textarea } from './ui/textarea';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { app } from '@/lib/firebase';
+import Image from 'next/image';
+
+const storage = getStorage(app);
 
 // Assuming slots from 8 AM to 10 PM (22:00)
 const timeSlots = Array.from({ length: 15 }, (_, i) => {
@@ -29,8 +35,11 @@ export function BookingSection() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [description, setDescription] = useState('');
+  const [flyerFile, setFlyerFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const auth = useContext(AuthContext);
   const bookingContext = useContext(BookingContext);
@@ -61,6 +70,13 @@ export function BookingSection() {
     return { baseRate, afterHoursFee, total, duration };
   }, [selectedTime, duration]);
   
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setFlyerFile(file);
+    }
+  };
+
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!date || !selectedTime || !name || !email || !auth?.user) {
@@ -75,6 +91,30 @@ export function BookingSection() {
     setIsSubmitting(true);
     
     try {
+      let flyerUrl: string | undefined = undefined;
+      let flyerStoragePath: string | undefined = undefined;
+
+      if (flyerFile) {
+        const storageRef = ref(storage, `flyers/${Date.now()}_${flyerFile.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, flyerFile);
+        
+        await new Promise<void>((resolve, reject) => {
+            uploadTask.on('state_changed',
+                () => {}, // We can add progress logic here if needed
+                (error) => {
+                    console.error("Flyer upload error:", error);
+                    toast({ variant: 'destructive', title: "Upload Failed", description: "Could not upload the flyer image." });
+                    reject(error);
+                },
+                async () => {
+                    flyerUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                    flyerStoragePath = uploadTask.snapshot.ref.fullPath;
+                    resolve();
+                }
+            );
+        });
+      }
+
       await bookingContext?.addBooking({
         userId: auth.user.id,
         name,
@@ -83,6 +123,9 @@ export function BookingSection() {
         date: date.toISOString().split('T')[0], // YYYY-MM-DD
         time: selectedTime,
         duration,
+        description,
+        flyerUrl,
+        flyerStoragePath
       });
 
       toast({
@@ -94,6 +137,10 @@ export function BookingSection() {
       setSelectedTime(null);
       setPhone('');
       setDuration(1);
+      setDescription('');
+      setFlyerFile(null);
+      if(fileInputRef.current) fileInputRef.current.value = "";
+
 
     } catch (error) {
        toast({
@@ -242,6 +289,21 @@ export function BookingSection() {
                     <Label htmlFor="phone">Phone Number (Optional)</Label>
                     <Input id="phone" type="tel" placeholder="024 123 4567" value={phone} onChange={e => setPhone(e.target.value)} />
                   </div>
+                   <Separator />
+                   <h3 className="text-lg font-semibold font-headline pt-2">Event Details (Optional)</h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="description" className='flex items-center gap-2'><Type className='h-4 w-4'/>Event Description</Label>
+                      <Textarea id="description" placeholder="e.g., Charity match for a good cause!" value={description} onChange={e => setDescription(e.target.value)} />
+                    </div>
+                     <div className="space-y-2">
+                      <Label htmlFor="flyer" className='flex items-center gap-2'><FileImage className='h-4 w-4'/>Upload Flyer</Label>
+                      <Input id="flyer" type="file" accept="image/*" onChange={handleFileChange} ref={fileInputRef} />
+                    </div>
+                    {flyerFile && (
+                      <div className="flex justify-center rounded-md border p-2">
+                          <Image src={URL.createObjectURL(flyerFile)} alt="Flyer Preview" width={200} height={200} className="object-contain"/>
+                      </div>
+                    )}
                   <Button type="submit" className="w-full text-lg py-6" size="lg" disabled={isSubmitting}>
                     {isSubmitting ? 'Processing...' : (
                       <>

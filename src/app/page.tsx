@@ -14,7 +14,6 @@ import { UserDashboard } from "@/components/user-dashboard";
 import { AuthContext } from '@/contexts/auth-context';
 import { GalleryContext } from '@/contexts/gallery-context';
 import { BookingContext } from '@/contexts/booking-context';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 
 const amenities = [
@@ -79,28 +78,40 @@ function LandingPage() {
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-headline font-bold text-center mb-12">Today's Events</h2>
           <Card className="max-w-4xl mx-auto">
-            <CardContent className="p-6">
+            <CardContent className="p-0">
               {todayBookings.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Event/Booking</TableHead>
-                       <TableHead>Duration</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {todayBookings.map(booking => (
-                      <TableRow key={booking.id}>
-                        <TableCell className="font-medium flex items-center gap-2"><Clock className="h-4 w-4" /> {booking.time}</TableCell>
-                        <TableCell>{booking.name}</TableCell>
-                        <TableCell>{booking.duration} hour(s)</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className='divide-y'>
+                  {todayBookings.map(booking => (
+                      <div key={booking.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 items-center">
+                          <div className='md:col-span-1'>
+                             {booking.flyerUrl ? (
+                                <Image 
+                                    src={booking.flyerUrl} 
+                                    alt={`${booking.name} flyer`} 
+                                    width={200}
+                                    height={200}
+                                    className="rounded-lg object-cover w-full aspect-square"
+                                    data-ai-hint="event flyer"
+                                />
+                             ) : (
+                                <div className='aspect-square bg-muted rounded-lg flex items-center justify-center'>
+                                  <Calendar className="h-16 w-16 text-muted-foreground" />
+                                </div>
+                             )}
+                          </div>
+                          <div className='md:col-span-2'>
+                              <div className="font-medium flex items-center gap-2 mb-2">
+                                  <Clock className="h-4 w-4" /> 
+                                  <span>{booking.time} for {booking.duration} hour(s)</span>
+                              </div>
+                              <h3 className="font-bold text-xl mb-1">{booking.name}</h3>
+                              <p className="text-muted-foreground">{booking.description || 'A private event is scheduled at this time.'}</p>
+                          </div>
+                      </div>
+                  ))}
+                </div>
               ) : (
-                <div className="text-center text-muted-foreground py-12">
+                <div className="text-center text-muted-foreground py-16">
                   <Calendar className="mx-auto h-12 w-12 mb-4" />
                   <h3 className="text-xl font-semibold">No Scheduled Events Today</h3>
                   <p>The pitch is free! Why not book a slot for a game?</p>
