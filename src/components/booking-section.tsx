@@ -61,7 +61,7 @@ export function BookingSection() {
     const endTime = hour + duration;
 
     // After 6 PM (18:00) or if the booking duration extends into the night
-    if (hour >= 18 || endTime > 18 || hour < 6) {
+    if (hour >= 18 || endTime > 18) {
       afterHoursFee = 50;
     }
 
@@ -199,10 +199,15 @@ export function BookingSection() {
   const isSlotInPast = (slot: string) => {
     if (!date) return false;
     const now = new Date();
-    const [hour, minute] = slot.split(':').map(Number);
-    const slotTime = new Date(date);
-    slotTime.setHours(hour, minute, 0, 0);
-    return slotTime < now;
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    
+    if (selectedDate < today) return true;
+    if (selectedDate > today) return false;
+
+    // If it's today, check the time
+    const [hour] = slot.split(':').map(Number);
+    return now.getHours() >= hour;
   };
 
   if (!auth?.user) {
