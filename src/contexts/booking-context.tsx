@@ -62,7 +62,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     const bookingToAdd = {
       ...newBooking,
       amount: calculateAmount(newBooking.time, newBooking.duration),
-      status: 'Pending' as const, // All new bookings are initially pending
+      status: 'Paid' as const, // New bookings are now automatically confirmed as paid.
       createdAt: serverTimestamp(),
     };
     await addDoc(bookingsCollection, bookingToAdd);
