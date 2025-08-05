@@ -19,6 +19,7 @@ import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/
 import { app } from '@/lib/firebase';
 import Image from 'next/image';
 import { usePaystackPayment } from 'react-paystack';
+import { initializeTransaction } from '@/ai/flows/payment-flow';
 
 const storage = getStorage(app);
 
@@ -39,6 +40,7 @@ export function BookingSection() {
   const [description, setDescription] = useState('');
   const [flyerFile, setFlyerFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingData, setBookingData] = useState<any>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -85,109 +87,119 @@ export function BookingSection() {
       setDescription('');
       setFlyerFile(null);
       if(fileInputRef.current) fileInputRef.current.value = "";
+      setBookingData(null);
   }
 
-  const handleBooking = async () => {
-    if (!date || !selectedTime || !name || !email || !auth?.user) {
-      toast({
-        variant: "destructive",
-        title: "Missing Information",
-        description: "Please fill out all required fields and select a date, time and duration.",
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      let flyerUrl: string | undefined = undefined;
-      let flyerStoragePath: string | undefined = undefined;
-
-      if (flyerFile) {
-        const storageRef = ref(storage, `flyers/${Date.now()}_${flyerFile.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, flyerFile);
-        
-        await new Promise<void>((resolve, reject) => {
-            uploadTask.on('state_changed',
-                () => {}, // We can add progress logic here if needed
-                (error) => {
-                    console.error("Flyer upload error:", error);
-                    toast({ variant: 'destructive', title: "Upload Failed", description: "Could not upload the flyer image." });
-                    reject(error);
-                },
-                async () => {
-                    flyerUrl = await getDownloadURL(uploadTask.snapshot.ref);
-                    flyerStoragePath = uploadTask.snapshot.ref.fullPath;
-                    resolve();
-                }
-            );
+  const onPaymentSuccess = async () => {
+     if (bookingData) {
+        await bookingContext?.addBooking(bookingData);
+         toast({
+            title: "Booking Confirmed!",
+            description: `Your payment was successful and your booking is confirmed.`,
         });
-      }
+        resetForm();
+     }
+  };
 
-      await bookingContext?.addBooking({
-        userId: auth.user.id,
-        name,
-        email,
-        phone,
-        date: date.toISOString().split('T')[0], // YYYY-MM-DD
-        time: selectedTime,
-        duration,
-        description,
-        flyerUrl,
-        flyerStoragePath
-      });
-
+  const onPaymentClose = () => {
       toast({
-        title: "Booking Request Sent!",
-        description: `We've received your request for ${date.toLocaleDateString()} at ${selectedTime}. We'll contact you shortly.`,
+          variant: "default",
+          title: "Payment window closed",
+          description: "You can continue with your payment anytime.",
       });
-      
-      resetForm();
-
-    } catch (error) {
-       toast({
-        variant: "destructive",
-        title: "Booking Failed",
-        description: "Could not create your booking. Please try again.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
   };
   
-    const paystackConfig = {
-        reference: new Date().getTime().toString(),
-        email: email,
-        amount: (priceDetails?.total || 0) * 100, // Amount in kobo
-        publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
-    };
+  const paystackConfig = {
+      reference: new Date().getTime().toString(),
+      email: email,
+      amount: (priceDetails?.total || 0) * 100, // Amount in kobo
+      publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
+  };
     
-    const initializePayment = usePaystackPayment(paystackConfig);
+  const initializePayment = usePaystackPayment(paystackConfig);
 
-    const onPaymentSuccess = () => {
-        handleBooking();
-    };
-
-    const onPaymentClose = () => {
+  const handlePaystackSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      if (!date || !selectedTime || !name || !email || !auth?.user || !priceDetails) {
         toast({
-            variant: "default",
-            title: "Payment window closed",
-            description: "You can continue with your payment anytime.",
+          variant: "destructive",
+          title: "Missing Information",
+          description: "Please fill out all required fields and select a date, time and duration.",
         });
-    };
-    
-    const handlePaystackSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
-            toast({
-                variant: "destructive",
-                title: "Payment Gateway Not Configured",
-                description: "The admin has not set up the payment gateway yet.",
-            });
-            return;
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      try {
+        const transaction = await initializeTransaction({
+            email,
+            amount: priceDetails.total,
+        });
+
+        if (!transaction || !transaction.access_code) {
+            throw new Error("Failed to initialize transaction");
         }
-        initializePayment({ onSuccess: onPaymentSuccess, onClose: onPaymentClose });
-    }
+        
+        // Store booking details to be used after successful payment
+        let flyerUrl: string | undefined = undefined;
+        let flyerStoragePath: string | undefined = undefined;
+
+        if (flyerFile) {
+            const storageRef = ref(storage, `flyers/${Date.now()}_${flyerFile.name}`);
+            const uploadTask = uploadBytesResumable(storageRef, flyerFile);
+            
+             await new Promise<void>((resolve, reject) => {
+                uploadTask.on('state_changed',
+                    () => {},
+                    (error) => {
+                        console.error("Flyer upload error:", error);
+                        reject(new Error("Could not upload flyer."));
+                    },
+                    async () => {
+                        flyerUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                        flyerStoragePath = uploadTask.snapshot.ref.fullPath;
+                        resolve();
+                    }
+                );
+            });
+        }
+        
+        setBookingData({
+            userId: auth.user.id,
+            name,
+            email,
+            phone,
+            date: date.toISOString().split('T')[0],
+            time: selectedTime,
+            duration,
+            description,
+            flyerUrl,
+            flyerStoragePath
+        });
+
+        // This replaces the direct call to `initializePayment`
+        const paystackPopup = new (window as any).PaystackPop();
+        paystackPopup.newTransaction({
+            ...paystackConfig,
+            key: paystackConfig.publicKey,
+            access_code: transaction.access_code,
+            onSuccess: onPaymentSuccess,
+            onCancel: onPaymentClose,
+        });
+
+      } catch (error: any) {
+          toast({
+              variant: "destructive",
+              title: "Payment Error",
+              description: error.message || "Could not initiate payment. Please try again.",
+          });
+      } finally {
+          setIsSubmitting(false);
+      }
+  }
+
 
   const isSlotBooked = (slot: string) => {
     if (!date || !bookingContext?.bookings) return false;
@@ -362,3 +374,5 @@ export function BookingSection() {
     </div>
   );
 }
+
+    
